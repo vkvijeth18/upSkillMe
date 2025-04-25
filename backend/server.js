@@ -11,6 +11,18 @@ import { protectRoute } from "./middleware/protectedRoute.js";
 import UploadToCloudRoute from "./routes/fileUpload/uploadToCloud.route.js";
 import cookieParser from "cookie-parser";
 import { v2 as cloudinary } from "cloudinary";
+import User from "./model/user.model.js"; // or any model you have
+
+// Keep MongoDB alive every 5 mins
+setInterval(async () => {
+  try {
+    const result = await User.estimatedDocumentCount(); // lightweight ping
+    console.log(`MongoDB Keep-Alive: User count = ${result}`);
+  } catch (err) {
+    console.error("MongoDB Keep-Alive Error:", err.message);
+  }
+}, 1000 * 60 * 5);
+
 dotenv.config();
 
 const app = express();
