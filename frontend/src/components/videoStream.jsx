@@ -70,7 +70,7 @@ const VideoStream = ({ onRecordingStop }) => {
         //console.log("Inteview Type:", InterviewType);
         try {
             //console.log("Video Stream uploading");
-            const response = await axios.post("/api/v1/uploadtocloud", formData, {
+            const response = await axios.post("https://upskillme-e2tz.onrender.com/api/v1/uploadtocloud", formData, {
                 headers: { "Content-Type": "multipart/form-data" },
                 withCredentials: true,
             });
