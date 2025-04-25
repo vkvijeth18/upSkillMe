@@ -16,13 +16,13 @@ dotenv.config();
 const app = express();
 
 cloudinary.config({
-  cloud_name: "dni0qbejc",
-  api_key: "978541628161691",
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET, // Click 'View API Keys' above to copy your API secret
 });
 
 const corsOptions = {
-  origin: "http://localhost:5173",
+  origin: "https://stellar-choux-854087.netlify.app/",
   methods: "GET,POST,PUT,DELETE",
   allowedHeaders: "Content-Type,Authorization",
   credentials: true,
