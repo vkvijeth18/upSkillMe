@@ -22,7 +22,7 @@ cloudinary.config({
 });
 
 const corsOptions = {
-  origin: "https://stellar-choux-854087.netlify.app/",
+  origin: "https://stellar-choux-854087.netlify.app",
   methods: "GET,POST,PUT,DELETE",
   allowedHeaders: "Content-Type,Authorization",
   credentials: true,
