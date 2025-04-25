@@ -41,6 +41,10 @@ app.use("/api/v1/uploadtocloud", protectRoute, UploadToCloudRoute);
 // Ensure protectRoute is applied
 const PORT = process.env.PORT || 5000;
 console.log(process.env.PORT);
+// Somewhere in your Express setup
+app.get("/health", (req, res) => {
+  res.status(200).json({ message: "Node backend is alive" });
+});
 
 app.listen(PORT, () => {
   connectDB();
