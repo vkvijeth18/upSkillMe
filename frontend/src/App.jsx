@@ -2,7 +2,7 @@ import './App.css';
 import HomePage from './Home/HomePage.jsx';
 import NavBar from '../src/common/navBar.jsx';
 import InterviewSelection from './pages/InterviewSelection.jsx';
-import InterviewPage from './pages/interviewPage.jsx';
+import InterviewPage from './pages/InterviewPage.jsx';
 import ProfilePage from "./pages/userDashboard.jsx";
 import AuthPage from './Auth/AuthPage.jsx';
 import { BrowserRouter as Router, Routes, Route, useLocation, Navigate, useNavigate } from "react-router-dom";
