@@ -2,7 +2,6 @@ import { v2 as cloudinary } from "cloudinary";
 import streamifier from "streamifier";
 import Interview from "../model/interview.model.js";
 import axios from "axios";
-import streamifier from "streamifier";
 import cloudinary from "cloudinary";
 
 export const uploadToCloud = async (req, res) => {
