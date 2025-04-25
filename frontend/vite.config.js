@@ -10,7 +10,7 @@ export default defineConfig({
   server: {
     proxy: {
       "/api/v1": {
-        target: "http://localhost:3000",
+        target: "https://upskillme-e2tz.onrender.com",
         changeOrigin: true,
       },
     },
