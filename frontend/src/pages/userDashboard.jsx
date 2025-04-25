@@ -18,7 +18,7 @@ function UserDashboard() {
     } = useQuery({
         queryKey: ['authUser'],
         queryFn: async () => {
-            const res = await axios.get("http://localhost:3000/api/v1/auth/getMe", {
+            const res = await axios.get("/api/v1/auth/getMe", {
                 withCredentials: true,
             });
             return res.data.data;
@@ -34,7 +34,7 @@ function UserDashboard() {
         queryKey: ['getInterviews'],
         queryFn: async () => {
             const response = await axios.get(
-                "http://localhost:3000/api/v1/getinterviews/getAllInteviews",
+                "/getinterviews/getAllInteviews",
                 { withCredentials: true }
             );
             if (!response.data.sucess) {

@@ -18,12 +18,12 @@ const Navbar = ({ isUserLoggedIn }) => {
     const handleLogOut = async () => {
         try {
             const response = await axios.post(
-                "http://localhost:3000/api/v1/auth/logout", {},
+                "/api/v1/auth/logout", {},
                 { headers: { "Content-Type": "application/json" }, withCredentials: true }
             );
 
             if (response.data.success) {
-                console.log("✅  Response:", response.data);
+                ////console.log("✅  Response:", response.data);
                 toast.success("Logged out Sucessfully");
                 queryClient.invalidateQueries("authUser");
             } else {
@@ -50,7 +50,7 @@ const Navbar = ({ isUserLoggedIn }) => {
             <h1 className="text-4xl font-bold text-[#0091df]">UpSkiLLMe.<span className='text-2xl'>inc</span></h1>
 
             {/* Desktop Navigation */}
-            {console.log(isUserLoggedIn)}
+            {/* //{//console.log(isUserLoggedIn)} */}
             <ul className="hidden md:flex gap-10 text-lg">
                 {navItems
                     .filter(item => {

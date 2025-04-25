@@ -55,9 +55,9 @@ export default function InterviewPage() {
 
     // Immediately log initial state on component mount
     useEffect(() => {
-        console.log("Component mounted. Initial state:");
-        console.log("Resume text available:", !!resumeText);
-        console.log("Interview type:", InterviewType);
+        // //console.log("Component mounted. Initial state:");
+        // //console.log("Resume text available:", !!resumeText);
+        // //console.log("Interview type:", InterviewType);
         // Fallback questions in case API fails
         const fallbackQuestions = [
             "I am curious to know about you. Could you tell me about yourself?",
@@ -86,7 +86,7 @@ export default function InterviewPage() {
 
         // Set fallback questions if resume is empty or not available
         if (!resumeText || resumeText.trim() === "") {
-            console.log("No resume text found, using fallback questions");
+            // //console.log("No resume text found, using fallback questions");
             currentQuestionsList.current = [...fallbackQuestions];
             setQuestionList(fallbackQuestions);
             setDebug(prev => ({ ...prev, resumeLoaded: false, questionsGenerated: true, currentStep: "using fallback questions" }));
@@ -94,7 +94,7 @@ export default function InterviewPage() {
                 introduceInterview();
             }, 1000);
         } else {
-            console.log("Resume text found, will generate custom questions");
+            // //console.log("Resume text found, will generate custom questions");
             setDebug(prev => ({ ...prev, resumeLoaded: true, currentStep: "resume loaded" }));
             generateQuestionList();
         }
@@ -122,25 +122,25 @@ export default function InterviewPage() {
 
     // Handle changes to the introduced state
     useEffect(() => {
-        console.log("Introduction state changed:", isIntroduced);
+        // //console.log("Introduction state changed:", isIntroduced);
         setDebug(prev => ({ ...prev, introComplete: isIntroduced }));
 
         if (isIntroduced && currentQuestionsList.current.length > 0 && !processingAction.current) {
-            console.log("Introduction complete and questions available, moving to first question");
+            // //console.log("Introduction complete and questions available, moving to first question");
             setTimeout(() => moveToNextQuestion(), 1500); // Added delay before moving to the first question
         }
     }, [isIntroduced]);
 
     // Handle changes to the question list
     useEffect(() => {
-        console.log("Question list updated. Length:", questionList.length);
+        // ////console.log("Question list updated. Length:", questionList.length);
         setDebug(prev => ({ ...prev, questionsGenerated: questionList.length > 0 }));
 
         // Update our ref to match the state
         currentQuestionsList.current = [...questionList];
 
         if (questionList.length > 0 && isIntroduced && !question && !processingAction.current) {
-            console.log("Ready to start first question");
+            ////console.log("Ready to start first question");
             setTimeout(() => moveToNextQuestion(), 1000);
         }
     }, [questionList]);
@@ -148,10 +148,10 @@ export default function InterviewPage() {
     // Monitor listening state
     useEffect(() => {
         if (isListeningActive && !manualListening) {
-            console.log("Listening activated, starting silence timer");
+            //console.log("Listening activated, starting silence timer");
             // Make sure we move on even if speech recognition is stuck
             silenceTimer.current = setTimeout(() => {
-                console.log("Silence timer triggered - no response detected");
+                //console.log("Silence timer triggered - no response detected");
                 stopListening();
                 speakResponse("I didn't hear your response. Let's move on.", () => {
                     questionsProcessed.current += 1;
@@ -167,7 +167,7 @@ export default function InterviewPage() {
 
 
     const loadVoices = () => {
-        console.log("Loading voices...");
+        //console.log("Loading voices...");
         const synth = window.speechSynthesis;
 
         // Initialize voices first
@@ -175,7 +175,7 @@ export default function InterviewPage() {
 
         const updateVoices = () => {
             availableVoices = synth.getVoices();
-            console.log(`Found ${availableVoices.length} voices`);
+            //console.log(`Found ${availableVoices.length} voices`);
 
             if (availableVoices.length > 0) {
                 setVoices(availableVoices);
@@ -185,7 +185,7 @@ export default function InterviewPage() {
                         v.name.toLowerCase().includes("samantha")
                 );
                 const selectedV = femaleVoice || availableVoices[0];
-                console.log("Selected voice:", selectedV?.name || "None");
+                //console.log("Selected voice:", selectedV?.name || "None");
                 setSelectedVoice(selectedV);
                 selectedVoiceRef.current = selectedV; // Set the voice reference
                 setIsLoading(false);
@@ -222,7 +222,7 @@ export default function InterviewPage() {
     const fetchPhonemes = async (text) => {
         try {
             const response = await axios.post(
-                "http://localhost:3000/api/v1/mockinterview/getPhenomes",
+                "/api/v1/mockinterview/getPhenomes",
                 { text },
                 { headers: { "Content-Type": "application/json" }, withCredentials: true }
             );
@@ -239,10 +239,10 @@ export default function InterviewPage() {
 
 
     const requestMicrophonePermission = async () => {
-        console.log("Requesting microphone permission...");
+        //console.log("Requesting microphone permission...");
         try {
             await navigator.mediaDevices.getUserMedia({ audio: true });
-            console.log("Microphone permission granted");
+            //console.log("Microphone permission granted");
         } catch (error) {
             console.error("Microphone permission denied:", error);
             toast.error("Microphone access is required for the interview. Please reload the page and allow microphone access.");
@@ -250,10 +250,10 @@ export default function InterviewPage() {
     };
 
     const requestCameraPermission = async () => {
-        console.log("Requesting camera permission...");
+        //console.log("Requesting camera permission...");
         try {
             await navigator.mediaDevices.getUserMedia({ video: true });
-            console.log("Camera permission granted");
+            //console.log("Camera permission granted");
         } catch (error) {
             console.error("Camera permission denied:", error);
             throw error;
@@ -261,7 +261,7 @@ export default function InterviewPage() {
     };
 
     const startInterviewTimer = () => {
-        console.log("Starting interview timer...");
+        //console.log("Starting interview timer...");
         interviewTimer.current = setInterval(() => {
             setTimer((prev) => {
                 if (prev <= 1 || isInterviewOver.current) {
@@ -275,7 +275,7 @@ export default function InterviewPage() {
     };
 
     const speakResponse = async (text, callback) => {
-        console.log("Speaking:", text);
+        //console.log("Speaking:", text);
         if (!selectedVoiceRef.current || isInterviewOver.current) {
             console.warn("Cannot speak: No voice selected or interview is over");
             if (callback) callback();
@@ -287,7 +287,7 @@ export default function InterviewPage() {
 
         // Cancel any ongoing utterance
         if (window.speechSynthesis.speaking) {
-            console.log("Cancelling ongoing speech");
+            //console.log("Cancelling ongoing speech");
             window.speechSynthesis.cancel();
         }
 
@@ -312,13 +312,13 @@ export default function InterviewPage() {
         }, 5000);
 
         speechUtterance.current.onend = () => {
-            console.log("Speech completed");
+            //console.log("Speech completed");
             clearInterval(keepSpeechAlive);
             speechUtterance.current = null;
             setIsSpeaking(false);
 
             if (callback) {
-                console.log("Executing speech callback");
+                //console.log("Executing speech callback");
                 setTimeout(() => callback(), 500); // Small delay before callback
             }
         };
@@ -341,7 +341,7 @@ export default function InterviewPage() {
             const estimatedDuration = Math.max(5000, text.length * 80); // At least 5 seconds
             setTimeout(() => {
                 if (speechUtterance.current) {
-                    console.log("Speech callback fallback triggered");
+                    //console.log("Speech callback fallback triggered");
                     clearInterval(keepSpeechAlive);
                     speechUtterance.current = null;
                     setIsSpeaking(false);
@@ -362,11 +362,11 @@ export default function InterviewPage() {
         if (processingAction.current) return;
         processingAction.current = true;
 
-        console.log("Introducing interview...");
+        //console.log("Introducing interview...");
         setDebug(prev => ({ ...prev, currentStep: "introducing" }));
 
         speakResponse("Hello! I am Camalia, your AI interviewer. Let's begin your interview.", () => {
-            console.log("Introduction completed");
+            //console.log("Introduction completed");
             setIsIntroduced(true);
             setDebug(prev => ({ ...prev, introComplete: true, currentStep: "introduction complete" }));
             processingAction.current = false;
@@ -374,7 +374,7 @@ export default function InterviewPage() {
     };
 
     const generateQuestionList = async () => {
-        console.log("Generating questions...");
+        //console.log("Generating questions...");
         setDebug(prev => ({ ...prev, currentStep: "generating questions" }));
 
         // Default questions in case API call fails
@@ -419,7 +419,7 @@ export default function InterviewPage() {
                 currentQuestionsList.current = [...defaultQuestions];
                 setQuestionList(defaultQuestions);
             } else {
-                console.log(`Generated ${questions.length} questions from API`);
+                //console.log(`Generated ${questions.length} questions from API`);
                 const finalQuestions = ["I am curious to know about you. Could you tell me about yourself?", ...questions.slice(0, 9)];
                 currentQuestionsList.current = [...finalQuestions];
                 setQuestionList(finalQuestions);
@@ -437,7 +437,7 @@ export default function InterviewPage() {
     };
 
     const stopListening = () => {
-        console.log("Stopping speech recognition");
+        //console.log("Stopping speech recognition");
         setIsListeningActive(false);
         isListening.current = false;
         clearTimeout(silenceTimer.current);
@@ -453,7 +453,7 @@ export default function InterviewPage() {
     };
 
     const startListening = (currentQ, manual = false) => {
-        console.log("Starting listening for:", currentQ, "Manual:", manual);
+        //console.log("Starting listening for:", currentQ, "Manual:", manual);
         if (isInterviewOver.current || isListening.current || isSpeaking) {
             console.warn("Cannot start listening: Interview over, already listening, or currently speaking");
             return;
@@ -482,7 +482,7 @@ export default function InterviewPage() {
 
                 // Move on automatically after a delay since we can't listen
                 setTimeout(() => {
-                    console.log("No speech recognition support, moving to next question");
+                    //console.log("No speech recognition support, moving to next question");
                     questionsProcessed.current += 1;
                     setIsListeningActive(false);
                     moveToNextQuestion();
@@ -498,18 +498,18 @@ export default function InterviewPage() {
             recognition.current.maxAlternatives = 1;
 
             recognition.current.onresult = (event) => {
-                console.log("Got speech result");
+                //console.log("Got speech result");
 
                 const lastResultIndex = event.results.length - 1;
                 const userResponse = event.results[lastResultIndex][0].transcript.trim();
-                console.log("User response:", userResponse);
+                //console.log("User response:", userResponse);
 
                 // Update current response state for display
                 setCurrentResponse(userResponse);
 
                 // Only check for repetition requests if not in manual mode
                 if (!manual && /sorry|repeat|again|didn'?t get/i.test(userResponse)) {
-                    console.log("User asked for repetition");
+                    //console.log("User asked for repetition");
                     stopListening();
                     speakResponse(`Sure, I'll repeat: ${currentQ}`, () => startListening(currentQ));
                     return;
@@ -552,7 +552,7 @@ export default function InterviewPage() {
             };
 
             recognition.current.onend = () => {
-                console.log("Recognition ended");
+                //console.log("Recognition ended");
 
                 // In manual mode, just update the listening state
                 if (manual) {
@@ -563,7 +563,7 @@ export default function InterviewPage() {
 
                 // If we're still supposed to be listening, but recognition ended unexpectedly
                 if (isListening.current) {
-                    console.log("Recognition ended unexpectedly, restarting...");
+                    //console.log("Recognition ended unexpectedly, restarting...");
                     if (recognitionAttempts.current < 3) {
                         // Try to restart the recognition once with a small delay
                         setTimeout(() => {
@@ -582,7 +582,7 @@ export default function InterviewPage() {
                         }, 500);
                     } else {
                         // If we've tried too many times, move on
-                        console.log("Too many recognition attempts, moving on");
+                        //console.log("Too many recognition attempts, moving on");
                         stopListening();
                         questionsProcessed.current += 1;
                         setTimeout(() => moveToNextQuestion(), 1000);
@@ -591,7 +591,7 @@ export default function InterviewPage() {
             };
 
             recognition.current.start();
-            console.log("Speech recognition started");
+            //console.log("Speech recognition started");
 
         } catch (error) {
             console.error("Error setting up speech recognition:", error);
@@ -606,12 +606,12 @@ export default function InterviewPage() {
 
     const moveToNextQuestion = () => {
         if (processingAction.current || isInterviewOver.current) {
-            console.log("Already processing an action or interview is over, not moving to next question");
+            //console.log("Already processing an action or interview is over, not moving to next question");
             return;
         }
 
         processingAction.current = true;
-        console.log("Moving to next question...");
+        //console.log("Moving to next question...");
         setDebug(prev => ({ ...prev, currentStep: "moving to next question" }));
 
         // Reset recognition attempts for the next question
@@ -622,7 +622,7 @@ export default function InterviewPage() {
 
         // Work with our ref copy of the questions list to avoid race conditions
         if (currentQuestionsList.current.length === 0) {
-            console.log("No more questions, ending interview");
+            //console.log("No more questions, ending interview");
             processingAction.current = false;
             endInterview();
             return;
@@ -634,8 +634,8 @@ export default function InterviewPage() {
         setQuestion(nextQuestion);
         currentQuestion.current = nextQuestion;
 
-        console.log(`Next question: "${nextQuestion}"`);
-        console.log(`Questions processed: ${questionsProcessed.current}, remaining: ${currentQuestionsList.current.length}`);
+        //console.log(`Next question: "${nextQuestion}"`);
+        //console.log(`Questions processed: ${questionsProcessed.current}, remaining: ${currentQuestionsList.current.length}`);
 
         setDebug(prev => ({
             ...prev,
@@ -679,7 +679,7 @@ export default function InterviewPage() {
 
     const endInterview = () => {
         toast.success("Interview Completed Successfully");
-        console.log("Ending interview");
+        //console.log("Ending interview");
         if (isInterviewOver.current) return;
 
         isInterviewOver.current = true;
@@ -693,7 +693,7 @@ export default function InterviewPage() {
         }
 
         speakResponse("Thank you for completing the interview. We appreciate your time!", () => {
-            console.log("Interview complete, stopping video stream and uploading video");
+            //console.log("Interview complete, stopping video stream and uploading video");
             stopVideoStream();
             setTimeout(() => navigate("/"), 4000);
         });
@@ -751,18 +751,18 @@ export default function InterviewPage() {
         setRecordedChunks([]); // Reset recorded chunks after creating Blob
 
         const formData = new FormData();
-        console.log("Interview Page is uploading");
+        //console.log("Interview Page is uploading");
         formData.append("video", blob, "interview.webm");
         formData.append("interviewType", InterviewType);
         try {
-            const response = await axios.post("http://localhost:3000/api/v1/uploadtocloud", formData, {
+            const response = await axios.post("/api/v1/uploadtocloud", formData, {
                 headers: { "Content-Type": "multipart/form-data" },
                 withCredentials: true, // ✅ This ensures cookies are sent
             });
 
             if (response.status === 200) {
                 toast.success("Video uploaded successfully");
-                console.log("Video uploaded successfully", response.data);
+                //console.log("Video uploaded successfully", response.data);
             } else {
                 toast.error("Error uploading video");
             }

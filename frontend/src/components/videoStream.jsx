@@ -44,14 +44,14 @@ const VideoStream = ({ onRecordingStop }) => {
         if (mediaRecorderRef.current) {
             chunksRef.current = []; // Clear previous recordings
             mediaRecorderRef.current.start();
-            console.log("Recording started");
+            //console.log("Recording started");
         }
     };
 
     const stopRecording = () => {
         if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
             mediaRecorderRef.current.stop();
-            console.log("Recording stopped");
+            //console.log("Recording stopped");
         }
     };
 
@@ -67,16 +67,16 @@ const VideoStream = ({ onRecordingStop }) => {
         const formData = new FormData();
         formData.append("video", blob, "interview.webm");
         formData.append("interviewType", InterviewType);
-        console.log("Inteview Type:", InterviewType);
+        //console.log("Inteview Type:", InterviewType);
         try {
-            console.log("Video Stream uploading");
-            const response = await axios.post("http://localhost:3000/api/v1/uploadtocloud", formData, {
+            //console.log("Video Stream uploading");
+            const response = await axios.post("/api/v1/uploadtocloud", formData, {
                 headers: { "Content-Type": "multipart/form-data" },
                 withCredentials: true,
             });
 
             if (response.status === 200) {
-                console.log("Video uploaded successfully", response.data);
+                //console.log("Video uploaded successfully", response.data);
             } else {
                 console.error("Error uploading video");
             }

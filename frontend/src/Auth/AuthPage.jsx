@@ -13,12 +13,12 @@ const AuthPage = () => {
     const navigate = useNavigate()
     const queryClient = useQueryClient();
     const signupUser = async (userData) => {
-        const response = await axios.post("http://localhost:3000/api/v1/auth/signup", userData, { headers: { "Content-Type": "application/json" }, withCredentials: true });
+        const response = await axios.post("/api/v1/auth/signup", userData, { headers: { "Content-Type": "application/json" }, withCredentials: true });
         return response.data;
     };
 
     const loginUser = async (userData) => {
-        const response = await axios.post("http://localhost:3000/api/v1/auth/login", userData, { headers: { "Content-Type": "application/json" }, withCredentials: true });
+        const response = await axios.post("/api/v1/auth/login", userData, { headers: { "Content-Type": "application/json" }, withCredentials: true });
         return response.data;
     };
 

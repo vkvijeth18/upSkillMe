@@ -59,7 +59,7 @@ export function ProfileScreen({ user }) {
         }
 
         try {
-            const response = await axios.post('http://localhost:3000/api/v1/getinterviews/updateUserProfile', form, {
+            const response = await axios.post('/api/v1/getinterviews/updateUserProfile', form, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                 }, withCredentials: true,
@@ -81,7 +81,7 @@ export function ProfileScreen({ user }) {
             <div className="border border-b-gray-100 p-6 rounded-lg">
                 <div className="flex gap-6">
                     {/* Avatar Section */
-                        console.log(user)}
+                    }
                     <div className="relative w-24 h-24">
                         <div className="w-full h-full bg-gray-300 rounded-full flex items-center justify-center overflow-hidden">
                             {user?.data?.profileImage ? (
