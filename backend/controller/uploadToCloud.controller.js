@@ -60,7 +60,7 @@ export const uploadToCloud = async (req, res) => {
 
     try {
       const response = await axios.post(
-        "https://upskilme-analysis.onrender.com",
+        "https://upskilme-analysis.onrender.com/analyze",
         {
           videoUrl,
           interviewId: interview._id.toString(),
