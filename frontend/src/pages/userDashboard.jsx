@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import api from "../pages/utils/api.js";
+import axios from 'axios';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { toast } from 'react-hot-toast';
 import { DashboardOverviewScreen } from '../dashboardUi/DashBoardOverviewScreen.jsx';
@@ -18,7 +18,7 @@ function UserDashboard() {
     } = useQuery({
         queryKey: ['authUser'],
         queryFn: async () => {
-            const res = await api.get("/api/v1/auth/getMe", {
+            const res = await axios.get("https://upskillme-e2tz.onrender.com/api/v1/auth/getMe", {
                 withCredentials: true,
             });
             return res.data.data;
@@ -33,8 +33,8 @@ function UserDashboard() {
     } = useQuery({
         queryKey: ['getInterviews'],
         queryFn: async () => {
-            const response = await api.get(
-                "/getinterviews/getAllInteviews",
+            const response = await axios.get(
+                "https://upskillme-e2tz.onrender.com/api/v1/getinterviews/getAllInteviews",
                 { withCredentials: true }
             );
             if (!response.data.sucess) {

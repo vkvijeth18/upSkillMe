@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { AiOutlineClose, AiOutlineMenu } from 'react-icons/ai';
 import { Link } from 'react-router-dom';
-import api from "../pages/utils/api.js";
+import axios from 'axios';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-hot-toast';
 
@@ -17,8 +17,8 @@ const Navbar = ({ isUserLoggedIn }) => {
 
     const handleLogOut = async () => {
         try {
-            const response = await api.post(
-                "/api/v1/auth/logout", {},
+            const response = await axios.post(
+                "https://upskillme-e2tz.onrender.com/api/v1/auth/logout", {},
                 { headers: { "Content-Type": "application/json" }, withCredentials: true }
             );
 

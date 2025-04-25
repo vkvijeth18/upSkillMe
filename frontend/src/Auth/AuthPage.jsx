@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import bgImg from "/bg.jpg";
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import api from "../pages/utils/api.js";
+import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast"
 const AuthPage = () => {
@@ -13,12 +13,12 @@ const AuthPage = () => {
     const navigate = useNavigate()
     const queryClient = useQueryClient();
     const signupUser = async (userData) => {
-        const response = await api.post("/api/v1/auth/signup", userData, { headers: { "Content-Type": "application/json" }, withCredentials: true });
+        const response = await axios.post("https://upskillme-e2tz.onrender.com/api/v1/auth/signup", userData, { headers: { "Content-Type": "application/json" }, withCredentials: true });
         return response.data;
     };
 
     const loginUser = async (userData) => {
-        const response = await api.post("/api/v1/auth/login", userData, { headers: { "Content-Type": "application/json" }, withCredentials: true });
+        const response = await axios.post("https://upskillme-e2tz.onrender.com/api/v1/auth/login", userData, { headers: { "Content-Type": "application/json" }, withCredentials: true });
         return response.data;
     };
 
