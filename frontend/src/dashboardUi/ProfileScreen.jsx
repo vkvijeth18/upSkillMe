@@ -2,7 +2,6 @@ import { UserCircle, Plus } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import axios from 'axios';
-import { invalidate } from '@react-three/fiber';
 export function ProfileScreen({ user }) {
     const [formData, setFormData] = useState({
         username: user?.username || '',

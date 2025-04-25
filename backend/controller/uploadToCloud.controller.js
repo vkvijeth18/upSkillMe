@@ -1,7 +1,10 @@
 import { v2 as cloudinary } from "cloudinary";
 import streamifier from "streamifier";
 import Interview from "../model/interview.model.js";
-import { spawn } from "child_process";
+import axios from "axios";
+import streamifier from "streamifier";
+import cloudinary from "cloudinary";
+
 export const uploadToCloud = async (req, res) => {
   try {
     if (!req.file) {
@@ -16,6 +19,8 @@ export const uploadToCloud = async (req, res) => {
     const userId = req.user._id;
     const stream = streamifier.createReadStream(req.file.buffer);
     const interviewType = req.body.interviewType || "default";
+
+    // Upload to Cloudinary
     const uploadPromise = new Promise((resolve, reject) => {
       const uploadStream = cloudinary.uploader.upload_stream(
         {
@@ -39,6 +44,7 @@ export const uploadToCloud = async (req, res) => {
 
     const { secure_url: videoUrl, public_id: publicId } = await uploadPromise;
 
+    // Save interview to DB
     const interview = new Interview({
       user_id: userId,
       video_url: videoUrl,
@@ -50,103 +56,64 @@ export const uploadToCloud = async (req, res) => {
 
     await interview.save();
 
-    const python310Path = "C:\\Program Files\\Python310\\python.exe";
-    const python = spawn(python310Path, [
-      "./analysis/interview_analysis.py",
-      videoUrl,
-      interview._id.toString(),
-    ]);
+    // Call Flask API on Render
+    let status = "Failed";
+    let parsedData = null;
 
-    let output = "";
+    try {
+      const response = await axios.post(
+        "https://upskilme-analysis.onrender.com",
+        {
+          videoUrl,
+          interviewId: interview._id.toString(),
+        }
+      );
 
-    python.stdout.on("data", (data) => {
-      output += data.toString();
-    });
+      parsedData = response.data;
 
-    python.stderr.on("data", (data) => {
-      console.error(`Python stderr: ${data}`);
-    });
+      if (parsedData && !parsedData.error) {
+        const updated = await Interview.findByIdAndUpdate(
+          interview._id,
+          {
+            status: "Analyzed",
+            analysis: parsedData,
+            analyzed_at: new Date(),
+          },
+          { new: true }
+        );
 
-    python.on("close", async (code) => {
-      let status = "Failed";
-      let parsedData = null; // Initialize parsedData here
-
-      try {
-        if (code === 0 && output) {
-          const firstBrace = output.indexOf("{");
-          const lastBrace = output.lastIndexOf("}");
-
-          if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
-            const jsonStr = output.substring(firstBrace, lastBrace + 1).trim();
-            try {
-              // Parse the JSON output directly here
-              const doneIndex = output.indexOf("MoviePy - Done.");
-
-              if (doneIndex !== -1) {
-                const jsonPart = output
-                  .substring(doneIndex + "MoviePy - Done.".length)
-                  .trim();
-
-                try {
-                  parsedData = JSON.parse(jsonPart); // Now parsedData is safely defined
-                  console.log("Parsed Data:", parsedData);
-                } catch (e) {
-                  console.log("Error parsing JSON:", e);
-                }
-              } else {
-                console.log("MoviePy not completed.");
-              }
-
-              if (parsedData) {
-                // Update the interview document in DB only if parsedData exists
-                const updated = await Interview.findByIdAndUpdate(
-                  interview._id,
-                  {
-                    status: "Analyzed",
-                    analysis: parsedData,
-                    analyzed_at: new Date(),
-                  },
-                  { new: true }
-                );
-
-                if (!updated) {
-                  console.error("Failed to update interview in DB");
-                } else {
-                  console.log("Updated interview in DB:", updated._id);
-                }
-                status = "Analyzed";
-                console.log("Interview analysis updated successfully.");
-              } else {
-                console.log("Parsed data is missing.");
-              }
-            } catch (parseError) {
-              console.error("Error parsing JSON:", parseError);
-              console.error("Problematic JSON string:", jsonStr);
-            }
-          } else {
-            console.error("No valid JSON found in Python output:", output);
-          }
+        if (!updated) {
+          console.error("Failed to update interview in DB");
         } else {
-          console.error(`Python process exited with code ${code}`);
+          console.log("Updated interview in DB:", updated._id);
         }
 
-        // Delete video from Cloudinary if analysis is complete
-        try {
-          await cloudinary.api.delete_resources([publicId], {
-            resource_type: "video",
-          });
-          console.log(`Video deleted from Cloudinary: ${publicId}`);
-        } catch (deleteErr) {
-          console.error("Error deleting video from Cloudinary:", deleteErr);
-        }
-
-        if (status === "Failed") {
-          await Interview.findByIdAndUpdate(interview._id, { status });
-        }
-      } catch (err) {
-        console.error("Unexpected error in Python close handler:", err);
+        status = "Analyzed";
+        console.log("Interview analysis updated successfully.");
+      } else {
+        console.error(
+          "Analysis error from Python API:",
+          parsedData?.error || "Unknown error"
+        );
       }
-    });
+    } catch (err) {
+      console.error("Failed to call Python analysis API:", err.message);
+    }
+
+    // Delete video from Cloudinary
+    try {
+      await cloudinary.api.delete_resources([publicId], {
+        resource_type: "video",
+      });
+      console.log(`Video deleted from Cloudinary: ${publicId}`);
+    } catch (deleteErr) {
+      console.error("Error deleting video from Cloudinary:", deleteErr);
+    }
+
+    // Final fallback if analysis failed
+    if (status === "Failed") {
+      await Interview.findByIdAndUpdate(interview._id, { status });
+    }
 
     return res.json({
       success: true,
