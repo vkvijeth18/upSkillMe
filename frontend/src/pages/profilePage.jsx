@@ -23,7 +23,6 @@ const InterviewDashboard = () => {
                 </div>
             </div>
 
-            {/* Main Content */}
             <div className="flex-1 p-10">
                 {/* Profile Section */}
                 <div className="flex items-center gap-6 mb-6">
