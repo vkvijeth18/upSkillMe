@@ -9,7 +9,7 @@ import { BrowserRouter as Router, Routes, Route, useLocation, Navigate, useNavig
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Toaster, toast } from 'react-hot-toast';
-import axios from 'axios';
+import api from "./pages/utils/api.js"
 
 function App() {
   const [isUserLoggedIn, setIsUserLoggedIn] = useState(false);
@@ -20,7 +20,7 @@ function App() {
     queryKey: ["authUser"],
     queryFn: async () => {
       try {
-        const response = await axios.get("/api/v1/auth/getme", {
+        const response = await api.get("/api/v1/auth/getme", {
           withCredentials: true
         });
         if (response.data.sucess) {

@@ -5,7 +5,7 @@ import "react-lazy-load-image-component/src/effects/blur.css";
 import useResumeStore from "../Store/ResumeStore";
 import useInterviewStore from "../Store/InterviewStore";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import api from "../pages/utils/api.js";
 import { toast } from "react-hot-toast"
 
 export default function InterviewSelection() {
@@ -35,7 +35,7 @@ export default function InterviewSelection() {
         const formData = new FormData();
         formData.append("resume", file);
         try {
-            const response = await axios.post("/api/v1/resumeupload", formData, {
+            const response = await api.post("/api/v1/resumeupload", formData, {
                 headers: { "Content-Type": "multipart/form-data" },
                 withCredentials: true,
             });

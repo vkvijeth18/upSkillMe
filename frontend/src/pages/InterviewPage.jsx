@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import useResumeStore from "../Store/ResumeStore";
 import useInterviewStore from "../Store/InterviewStore";
-import axios from "axios";
+import api from "../pages/utils/api.js";
 import Scene from "./model"; // Import the Scene component
 import { toast } from "react-hot-toast";
 import VideoStream from "../components/videoStream";
@@ -221,7 +221,7 @@ export default function InterviewPage() {
 
     const fetchPhonemes = async (text) => {
         try {
-            const response = await axios.post(
+            const response = await api.post(
                 "/api/v1/mockinterview/getPhenomes",
                 { text },
                 { headers: { "Content-Type": "application/json" }, withCredentials: true }
@@ -755,7 +755,7 @@ export default function InterviewPage() {
         formData.append("video", blob, "interview.webm");
         formData.append("interviewType", InterviewType);
         try {
-            const response = await axios.post("/api/v1/uploadtocloud", formData, {
+            const response = await api.post("/api/v1/uploadtocloud", formData, {
                 headers: { "Content-Type": "multipart/form-data" },
                 withCredentials: true, // ✅ This ensures cookies are sent
             });

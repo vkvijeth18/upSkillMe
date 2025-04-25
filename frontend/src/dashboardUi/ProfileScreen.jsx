@@ -1,7 +1,7 @@
 import { UserCircle, Plus } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
-import axios from 'axios';
+import api from "../pages/utils/api.js";
 import { invalidate } from '@react-three/fiber';
 export function ProfileScreen({ user }) {
     const [formData, setFormData] = useState({
@@ -59,7 +59,7 @@ export function ProfileScreen({ user }) {
         }
 
         try {
-            const response = await axios.post('/api/v1/getinterviews/updateUserProfile', form, {
+            const response = await api.post('/api/v1/getinterviews/updateUserProfile', form, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                 }, withCredentials: true,
