@@ -1,0 +1,8 @@
+html, body {
+  background-color: #080B1A !important; /* Ensures global dark background */
+  scroll-behavior: smooth; /* Smooth scrolling */
+}
+
+img {
+  background: transparent; /* Prevents white flashes from image loading */
+}
