@@ -63,118 +63,137 @@ const AuthPage = () => {
     };
 
     return (
-        <div className="flex h-screen bg-gray-900 text-white">
-            <div className="w-1/2 flex flex-col items-center justify-center bg-[#101024] p-10">
+        <div className="flex items-center justify-center w-full h-screen bg-[#0A0A23] text-white">
+            <div className="w-full max-w-lg bg-[#101024] p-8 rounded-2xl shadow-lg">
                 {isLogin ? (
                     <>
-                        <h3 className="text-lg italic mb-4">LOGIN TO YOUR ACCOUNT</h3>
-                        <div className="bg-white text-black p-6 rounded-lg w-80">
-                            <div className="mb-4 flex items-center border-b pb-2">
-                                <span className="mr-2">👤</span>
+                        <h2 className="text-3xl font-bold text-center mb-8">Login</h2>
+
+                        <div className="space-y-6">
+                            <div>
+                                <label className="block text-sm mb-2">User Name</label>
                                 <input
                                     type="text"
                                     placeholder="Username"
                                     value={username}
-                                    required={true}
+                                    required
                                     onChange={(e) => setUserName(e.target.value)}
-                                    className="w-full outline-none"
+                                    className="w-full p-3 rounded-md bg-[#1A1A3C] border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 />
                             </div>
-                            <div className="mb-4 flex items-center border-b pb-2">
-                                <span className="mr-2">🔒</span>
+
+                            <div>
+                                <label className="block text-sm mb-2">Password</label>
                                 <input
                                     type="password"
                                     placeholder="Password"
-                                    required={true}
                                     value={password}
+                                    required
                                     onChange={(e) => setPassword(e.target.value)}
-                                    className="w-full outline-none"
+                                    className="w-full p-3 rounded-md bg-[#1A1A3C] border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 />
                             </div>
-                            <a href="#" className="text-blue-500 text-sm">Forgot Password?</a>
+
+                            <div className="flex justify-end">
+                                <a href="#" className="text-sm text-blue-400 hover:underline">
+                                    Forgot password?
+                                </a>
+                            </div>
+
+                            <button
+                                className="w-full bg-blue-600 hover:bg-blue-700 py-3 rounded-md font-semibold transition"
+                                onClick={handleLogin}
+                            >
+                                Log in
+                            </button>
+
+                            <p className="text-center text-sm mt-6">
+                                Don't have an account?{" "}
+                                <button
+                                    onClick={() => setIsLogin(false)}
+                                    className="text-blue-400 hover:underline"
+                                >
+                                    Sign up
+                                </button>
+                            </p>
                         </div>
-                        <button className="mt-6 bg-blue-500 px-6 py-2 rounded-lg" onClick={handleLogin}>LOGIN</button>
-                        <p className="mt-4 text-sm">
-                            Don’t have an account?{" "}
-                            <button onClick={() => setIsLogin(false)} className="text-blue-400">Create An Account</button>
-                        </p>
                     </>
                 ) : (
                     <>
-                        <h2 className="text-xl font-bold mb-6">SIGN UP</h2>
-                        <div className="bg-white text-black p-6 rounded-lg w-80">
-                            <div className="mb-4 flex items-center border-b pb-2">
-                                <span className="mr-2">👤</span>
+                        <h2 className="text-3xl font-bold text-center mb-8">Sign Up</h2>
+
+                        <div className="space-y-6">
+                            <div>
+                                <label className="block text-sm mb-2">Username</label>
                                 <input
                                     type="text"
                                     placeholder="Username"
-                                    required={true}
                                     value={username}
+                                    required
                                     onChange={(e) => setUserName(e.target.value)}
-                                    className="w-full outline-none"
+                                    className="w-full p-3 rounded-md bg-[#1A1A3C] border border-gray-700 focus:outline-none focus:ring-2 focus:ring-green-500"
                                 />
                             </div>
-                            <div className="mb-4 flex items-center border-b pb-2">
-                                <span className="mr-2">📧</span>
+
+                            <div>
+                                <label className="block text-sm mb-2">Email address</label>
                                 <input
                                     type="email"
-                                    placeholder="Email"
-                                    required={true}
+                                    placeholder="Email address"
                                     value={email}
+                                    required
                                     onChange={(e) => setEmail(e.target.value)}
-                                    className="w-full outline-none"
+                                    className="w-full p-3 rounded-md bg-[#1A1A3C] border border-gray-700 focus:outline-none focus:ring-2 focus:ring-green-500"
                                 />
                             </div>
-                            <div className="mb-4 flex items-center border-b pb-2">
-                                <span className="mr-2">🔒</span>
+
+                            <div>
+                                <label className="block text-sm mb-2">Password</label>
                                 <input
                                     type="password"
                                     placeholder="Password"
-                                    required={true}
                                     value={password}
+                                    required
                                     onChange={(e) => setPassword(e.target.value)}
-                                    className="w-full outline-none"
+                                    className="w-full p-3 rounded-md bg-[#1A1A3C] border border-gray-700 focus:outline-none focus:ring-2 focus:ring-green-500"
                                 />
                             </div>
-                            <div className="mb-4 flex items-center border-b pb-2">
-                                <span className="mr-2">🔄</span>
+
+                            <div>
+                                <label className="block text-sm mb-2">Confirm Password</label>
                                 <input
                                     type="password"
-                                    required={true}
                                     placeholder="Confirm Password"
                                     value={confirmPassword}
+                                    required
                                     onChange={(e) => setConfirmPassword(e.target.value)}
-                                    className="w-full outline-none"
+                                    className="w-full p-3 rounded-md bg-[#1A1A3C] border border-gray-700 focus:outline-none focus:ring-2 focus:ring-green-500"
                                 />
                             </div>
+
+                            <button
+                                className="w-full bg-green-600 hover:bg-green-700 py-3 rounded-md font-semibold transition"
+                                onClick={handleSignup}
+                            >
+                                Sign up
+                            </button>
+
+                            <p className="text-center text-sm mt-6">
+                                Already have an account?{" "}
+                                <button
+                                    onClick={() => setIsLogin(true)}
+                                    className="text-blue-400 hover:underline"
+                                >
+                                    Login
+                                </button>
+                            </p>
                         </div>
-                        <button className="mt-6 bg-green-600 px-6 py-2 rounded-lg" onClick={handleSignup}>SIGN UP</button>
-                        <p className="mt-4 text-sm">
-                            Already have an account?{" "}
-                            <button onClick={() => setIsLogin(true)} className="text-blue-400">Login</button>
-                        </p>
                     </>
                 )}
             </div>
-
-            {/* Right Section (Static Design) */}
-            <div className="w-1/2 bg-purple-900 flex flex-col items-center justify-center p-10" style={{
-                backgroundImage: `url(${bgImg})`,
-                backgroundSize: "cover",
-                backgroundPosition: "center",
-            }}>
-                <div className="bg-white p-8 rounded-lg text-center shadow-xl">
-                    <div className="text-4xl mb-4">👥</div>
-                    <p className="text-black font-semibold">UpSkillMe</p>
-                    <p className="text-black text-sm italic">Career Excellence</p>
-                </div>
-                <div className="mt-4 flex gap-2">
-                    <div className={`w-3 h-3 ${isLogin ? "bg-white" : "bg-gray-500"} rounded-full`}></div>
-                    <div className={`w-3 h-3 ${isLogin ? "bg-gray-500" : "bg-white"} rounded-full`}></div>
-                </div>
-            </div>
         </div>
     );
+
 };
 
 export default AuthPage;

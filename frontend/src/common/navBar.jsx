@@ -45,85 +45,80 @@ const Navbar = ({ isUserLoggedIn }) => {
     ];
 
     return (
-        <div className="bg-[#1C1733] flex justify-between items-center h-16  min-w-[100px] mx-auto px-4 text-white rounded-lg font-mono mt-2 sm:p-6 ml-4 mr-4">
+        <div className="bg-gradient-to-r from-[#1C1733] to-[#221b3a] flex justify-between items-center h-16 min-w-[100px] mx-auto px-6 text-white rounded-2xl shadow-lg  mt-4 sm:px-10 ml-4 mr-4">
+
             {/* Logo */}
-            <h1 className="lg:text-4xl md:text-3xl sm:text-xl font-bold text-[#0091df]">UpSkiLLMe.<span className='lg:text-2xl md:text-xl  sm:text-sm'>inc</span></h1>
+            <h1 className="text-2xl md:text-3xl font-extrabold tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-[#00df9a] to-[#0091df]">
+                UpSkiLLMe<span className="text-xs ml-1 text-gray-400">.inc</span>
+            </h1>
 
             {/* Desktop Navigation */}
-            {/* //{//console.log(isUserLoggedIn)} */}
-            <ul className="hidden md:flex gap-10 text-lg">
+            <ul className="hidden md:flex gap-8 text-base font-semibold">
                 {navItems
                     .filter(item => {
-                        // Show "Sign Up" only if NOT logged in
                         if (item.text === "Sign Up" && isUserLoggedIn) return false;
-
-                        // Show "Log Out" only if IS logged in
                         if (item.text === "Log Out" && !isUserLoggedIn) return false;
-
                         return true;
                     })
                     .map((item) => (
                         <li
                             key={item.id}
-                            className="p-4 hover:bg-[#00df9a] rounded-xl cursor-pointer duration-300 hover:text-black"
+                            className="relative group p-2 rounded-md  transition-all duration-300  hover:bg-[#00df9a] hover:text-black  cursor-pointer font-medium text-md"
                         >
                             {item.onClick ? (
-                                <button onClick={(e) => {
-                                    e.preventDefault();
-                                    item.onClick();
-                                }}>
+                                <button onClick={(e) => { e.preventDefault(); item.onClick(); }}>
                                     {item.text}
                                 </button>
                             ) : (
                                 <Link to={item.link}>{item.text}</Link>
                             )}
+                            <button className="absolute left-0 -bottom-1 w-0 h-[2px]"></button>
                         </li>
-                    ))
-                }
+                    ))}
             </ul>
 
             {/* Mobile Navigation Icon */}
-            <div onClick={handleNav} className="block md:hidden cursor-pointer z-10">
-                {nav ? <AiOutlineClose size={20} /> : <AiOutlineMenu size={20} />}
+            <div onClick={handleNav} className="block md:hidden cursor-pointer z-20">
+                {nav ? <AiOutlineClose size={24} /> : <AiOutlineMenu size={24} />}
             </div>
 
             {/* Mobile Navigation Menu */}
             <ul
-                className={`fixed z-10 md:hidden left-0 top-0 w-[50%] h-full border-r border-gray-900 bg-[#1C1733] ease-in-out duration-500 ${nav ? 'left-0' : 'left-[-100%]'}`}
+                className={`fixed z-10 md:hidden top-0 left-0 w-[60%] h-full bg-[#1C1733] rounded-tr-3xl rounded-br-3xl p-8 shadow-2xl ease-in-out duration-500 ${nav ? 'translate-x-0' : '-translate-x-full'}`}
             >
                 {/* Mobile Logo */}
-                <h1 className=" z-10 text-xl font-bold text-[#0091df] m-4">UpSkiLLMe.<span className='text-sm'>inc</span></h1>
+                <h1 className="text-2xl md:text-3xl font-extrabold tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-[#00df9a] to-[#0091df] mb-3">
+                    UpSkiLLMe<span className="text-xs ml-1 text-gray-400">.inc</span>
+                </h1>
 
                 {/* Mobile Navigation Items */}
                 {navItems
                     .filter(item => {
-                        // Show "Sign Up" only if NOT logged in
                         if (item.text === "Sign Up" && isUserLoggedIn) return false;
-
-                        // Show "Log Out" only if IS logged in
                         if (item.text === "Log Out" && !isUserLoggedIn) return false;
-
                         return true;
                     })
                     .map((item) => (
                         <li
                             key={item.id}
-                            className="p-4 border-b rounded-xl hover:bg-[#00df9a] duration-300 hover:text-black cursor-pointer border-gray-600 text-sm"
+                            onClick={() => {
+                                handleNav(); // close the mobile menu
+                                if (item.onClick) item.onClick(); // also run item's onClick if exists
+                            }}
+                            className="p-3 mb-2 rounded-md hover:bg-[#00df9a] hover:text-black transition-all cursor-pointer font-medium text-sm"
                         >
                             {item.onClick ? (
-                                <button onClick={(e) => {
-                                    e.preventDefault();
-                                    item.onClick();
-                                }}>
+                                <button>
                                     {item.text}
                                 </button>
                             ) : (
                                 <Link to={item.link}>{item.text}</Link>
                             )}
                         </li>
-                    ))
-                }
+                    ))}
+
             </ul>
+
         </div>
     );
 };

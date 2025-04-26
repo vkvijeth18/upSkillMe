@@ -778,101 +778,97 @@ export default function InterviewPage() {
 
 
     return (
-        <div className="min-h-screen w-full bg-gray-900 text-white p-4 flex items-center justify-center overflow-hidden">
-            <div className="w-full max-w-[80%] h-screen bg-gray-800 rounded-xl overflow-hidden shadow-xl flex flex-col">
+        <div className="min-h-screen w-full bg-gray-900 text-white p-4 flex items-center justify-center">
+            <div className="w-full max-w-[80%] h-full bg-gray-800 rounded-xl border-rounded overflow-hidden shadow-2xl flex flex-col">
 
                 {/* Header */}
-                <div className="bg-gray-800 py-3 px-6 flex justify-between items-center border-b border-gray-700">
-                    <h1 className="text-3xl font-bold text-blue-400">AI INTERVIEWER</h1>
-                    <div className="text-red-500 font-medium">
-                        Time: {Math.floor(timer / 60)}:{("0" + Math.floor(timer % 60)).slice(-2)}
+                <div className="bg-gray-900 py-4 px-6 flex justify-between items-center ">
+                    <h1 className="text-2xl font-bold text-blue-400">AI INTERVIEWER</h1>
+                    <div className="text-red-500 font-medium text-lg">
+                        {`Time: ${Math.floor(timer / 60)}:${("0" + Math.floor(timer % 60)).slice(-2)}`}
                     </div>
                 </div>
 
-                {/* Content Layout */}
-                <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
+                {/* Main Content */}
+                <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
 
-                    {/* Left - Avatar and Video */}
-                    <div className="w-full md:w-3/5 p-4 flex flex-col">
-                        <div className="aspect-square bg-gray-100 rounded-xl overflow-hidden mb-4 flex items-center justify-center">
+                    {/* Left Side - Interviewer */}
+                    <div className="w-full md:w-1/2 flex flex-col p-6 space-y-6">
+                        <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center">
                             <Scene phonemes={phonemes} isSpeaking={isSpeaking} />
                         </div>
-
-                        <div className="flex-1">
-                            <VideoStream onRecordingStop={endInterview} />
+                        <div className="bg-gray-700 p-4 rounded-lg">
+                            <h2 className="text-lg font-semibold text-blue-400 mb-2">Question:</h2>
+                            <p>{question || "Waiting for a question..."}</p>
                         </div>
                     </div>
 
-                    {/* Right - Questions and Controls */}
-                    <div className="w-full md:w-2/5 bg-gray-800 p-4 border-t md:border-t-0 md:border-l border-gray-700 flex flex-col">
-                        {isLoading ? (
-                            <div className="flex-1 flex items-center justify-center">
-                                <p className="text-xl">Loading interview system...</p>
+                    {/* Right Side - Candidate */}
+                    <div className="w-full md:w-1/2 flex flex-col p-6 space-y-6">
+                        <div className="relative aspect-square bg-gray-700 rounded-lg overflow-hidden">
+                            <VideoStream onRecordingStop={endInterview} />
+                            <div className="absolute top-2 left-2 flex items-center space-x-2 bg-black bg-opacity-50 px-3 py-1 rounded-full text-xs text-white">
+                                <span className="h-2.5 w-2.5 bg-red-500 rounded-full animate-ping"></span>
+                                <span>LIVE</span>
                             </div>
-                        ) : (
-                            <div className="flex-1 flex flex-col overflow-hidden">
-                                {question && (
-                                    <div className="mb-4">
-                                        <h2 className="text-lg font-medium text-blue-400 mb-2">Question:</h2>
-                                        <div className="bg-gray-700 p-3 rounded-lg">
-                                            <p>{question}</p>
-                                        </div>
-                                    </div>
-                                )}
 
-                                {/* Response area */}
-                                <div className="flex-1 overflow-auto mb-4">
-                                    <h2 className="text-lg font-medium text-purple-400 mb-2">Your Response:</h2>
-                                    <div className="bg-gray-700 p-3 rounded-lg min-h-[6rem] max-h-[12rem]">
-                                        {currentResponse || "Your answer will appear here..."}
-                                    </div>
-                                </div>
+                        </div>
 
-                                {/* Buttons Row */}
-                                <div className="flex justify-center space-x-6 mt-2">
-                                    <button onClick={endInterview} className="p-3 bg-purple-500 rounded-full hover:bg-red-600">
-                                        <span className="text-2xl">❌</span>
-                                    </button>
-                                    <button onClick={toggleManualListening} className={`p-3 rounded-full ${isListeningActive ? 'bg-red-500' : 'bg-blue-500'} hover:brightness-110`}>
-                                        <span className="text-2xl">🎙️</span>
-                                    </button>
-                                    <button
-                                        onClick={submitResponse}
-                                        className="p-3 bg-green-500 rounded-full hover:bg-green-600"
-                                        disabled={!currentResponse || processingAction.current}
-                                    >
-                                        <span className="text-2xl">✅</span>
-                                    </button>
-                                </div>
-
-                                {/* Bottom buttons */}
-                                <div className="grid grid-cols-2 gap-3 mt-4">
-                                    <button
-                                        onClick={repeatCurrentQuestion}
-                                        className="py-2 px-4 bg-blue-500 text-white font-medium rounded-lg hover:bg-blue-600"
-                                        disabled={!question || isSpeaking || processingAction.current}
-                                    >
-                                        Repeat
-                                    </button>
-                                    <button
-                                        onClick={() => {
-                                            stopListening();
-                                            processingAction.current = false;
-                                            moveToNextQuestion();
-                                        }}
-                                        className="py-2 px-4 bg-yellow-500 text-white font-medium rounded-lg hover:bg-yellow-600"
-                                        disabled={processingAction.current}
-                                    >
-                                        Skip
-                                    </button>
-                                </div>
+                        {/* Answer Input */}
+                        <div className="flex flex-col flex-1">
+                            <h2 className="text-lg font-semibold text-purple-400 mb-2">Your Response:</h2>
+                            <div className="flex-1 bg-gray-700 p-4 rounded-lg overflow-auto">
+                                {currentResponse || "Your answer will appear here..."}
                             </div>
-                        )}
+                        </div>
+
+                        {/* Control Buttons */}
+                        <div className="flex items-center justify-center gap-6 mt-4">
+                            <button onClick={endInterview} className="p-3 bg-purple-500 hover:bg-purple-700 rounded-full text-2xl">
+                                ❌
+                            </button>
+                            <button
+                                onClick={toggleManualListening}
+                                className={`p-3 rounded-full text-2xl ${isListeningActive ? 'bg-red-500' : 'bg-blue-500'} hover:brightness-110`}
+                            >
+                                🎙️
+                            </button>
+                            <button
+                                onClick={submitResponse}
+                                disabled={!currentResponse || processingAction.current}
+                                className="p-3 bg-green-500 hover:bg-green-700 rounded-full text-2xl disabled:opacity-50"
+                            >
+                                ✅
+                            </button>
+                        </div>
+
+                        {/* Bottom Buttons */}
+                        <div className="grid grid-cols-2 gap-4 mt-6">
+                            <button
+                                onClick={repeatCurrentQuestion}
+                                disabled={!question || isSpeaking || processingAction.current}
+                                className="py-2 px-4 bg-blue-500 hover:bg-blue-700 rounded-lg font-medium disabled:opacity-50"
+                            >
+                                Repeat Question
+                            </button>
+                            <button
+                                onClick={() => {
+                                    stopListening();
+                                    processingAction.current = false;
+                                    moveToNextQuestion();
+                                }}
+                                disabled={processingAction.current}
+                                className="py-2 px-4 bg-yellow-500 hover:bg-yellow-600 rounded-lg font-medium disabled:opacity-50"
+                            >
+                                Skip
+                            </button>
+                        </div>
+
                     </div>
                 </div>
+
             </div>
         </div>
-
     );
 
 }

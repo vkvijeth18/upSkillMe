@@ -6,71 +6,81 @@ import { LazyLoadImage } from "react-lazy-load-image-component";
 import "react-lazy-load-image-component/src/effects/blur.css";
 export default function WhyChooseUpskillMe() {
     return (
-        <div className="relative flex flex-col items-center justify-center bg-[#080B1A] text-white py-20 px-6">
-            {/* Background Gradient Circles */}
-            <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-[80%] h-[60%] bg-purple-900 opacity-30 rounded-full blur-3xl"></div>
+        <div className="relative flex flex-col items-center justify-center bg-[#080B1A] text-white py-24 px-8 overflow-hidden">
+            {/* Background Gradient Circle */}
+            <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-[60%] h-[60%] bg-purple-700 opacity-20 rounded-full blur-3xl z-0"></div>
 
             {/* Title */}
-            <h2 className="lg:text-3xl md:text-2xl sm:text-xl font-bold text-center text-white mb-12">
+            <h2 className="lg:text-4xl md:text-3xl text-2xl font-extrabold text-center text-white mb-16 z-10">
                 Why Choose UpskillMe?
             </h2>
 
             {/* Cards Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 text-center z-10">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10 z-10">
                 {[
                     {
-                        title: "Personalized Feedback:",
-                        desc: "Get constructive feedback to identify your strengths and areas for improvement.",
+                        title: "Tailored Feedback",
+                        desc: "Receive actionable advice customized for your unique career journey.",
+                        icon: "🗽", // Statue of Liberty
                     },
                     {
-                        title: "Realistic Mock Interviews:",
-                        desc: "Simulate real face-to-face interviews with industry-relevant questions.",
+                        title: "Real-World Interviews",
+                        desc: "Practice with real-world scenarios inspired by top NYC companies.",
+                        icon: "🏙️", // NYC Skyline
                     },
                     {
-                        title: "Expert Insights:",
-                        desc: "Learn from curated tips and strategies from industry professionals.",
+                        title: "Expert Mentorship",
+                        desc: "Insights from seasoned industry leaders to accelerate your growth.",
+                        icon: "🎯", // Target / Focus
                     },
                     {
-                        title: "Track Your Progress:",
-                        desc: "Monitor your performance and growth with detailed analytics.",
+                        title: "Trackable Growth",
+                        desc: "Visualize your improvement through detailed analytics and charts.",
+                        icon: "📈", // Analytics chart
                     },
                     {
-                        title: "Realistic Mock Interviews:",
-                        desc: "Simulate real face-to-face interviews with industry-relevant questions.",
+                        title: "Boost Confidence",
+                        desc: "Build the confidence to ace interviews in any high-pressure environment.",
+                        icon: "🚀", // Rocket
+                    },
+                    {
+                        title: "NYC Hustle Mindset",
+                        desc: "Train with a resilient and dynamic mindset—just like the NYC spirit!",
+                        icon: "💼", // Business/Work
                     },
                 ].map((item, index) => (
                     <div
                         key={index}
-                        className="bg-white/10 p-6 rounded-lg border border-white/20 shadow-lg w-80 transition-all duration-300 ease-in-out 
-                                   hover:border-blue-400 hover:shadow-md hover:shadow-blue-400/50"
+                        className="bg-white/5 p-8 rounded-2xl border border-white/20 shadow-xl hover:shadow-purple-500/30 hover:border-purple-400/40 transition-all duration-300 ease-in-out flex flex-col items-center text-center backdrop-blur-sm"
                     >
-                        <h3 className="text-xl font-bold text-purple-400">
+                        <div className="text-4xl mb-4">{item.icon}</div>
+                        <h3 className="text-xl font-bold text-purple-300 mb-2">
                             {item.title}
                         </h3>
-                        <p className="text-gray-300 mt-2">{item.desc}</p>
+                        <p className="text-gray-300">{item.desc}</p>
                     </div>
                 ))}
             </div>
 
-            {/* Robot Illustration */}
-            <div className="mt-6">
+            {/* Robot/NYC Illustration */}
+            <div className="mt-16">
                 <motion.div
                     whileHover={{
-                        y: -20,
-                        rotate: [-3, 3, -3, 0],
-                        scale: 1.1,
+                        y: -15,
+                        rotate: [-2, 2, -2, 0],
+                        scale: 1.05,
                     }}
                     transition={{
                         type: "spring",
                         stiffness: 200,
-                        damping: 15,
+                        damping: 18,
                     }}
                 >
                     <LazyLoadImage
                         src={movingman}
-                        alt="3D Man"
+                        alt="3D Robot"
                         effect="blur"
-                        className="hidden sm:block w-20 md:w-[200px] drop-shadow-xl mix-blend-screen border-none"
+                        className="w-28 md:w-40 drop-shadow-2xl mix-blend-screen"
                     />
                 </motion.div>
             </div>

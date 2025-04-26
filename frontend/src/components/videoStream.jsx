@@ -90,24 +90,23 @@ const VideoStream = ({ onRecordingStop }) => {
     };
 
     return (
-        <div className="mt-5 p-4 bg-gray-800 border-4 border-green-500 rounded-lg flex-1">
-            <h2 className="text-lg font-semibold text-green-400 mb-2">Live Video Feed:</h2>
+        <div className="w-full h-full p-4 bg-gray-800 border-4 border-green-500 rounded-lg flex-1">
             <video
                 ref={videoRef}
                 autoPlay
                 muted
-                className="w-full h-[250px] object-cover rounded"
+                className="mt-4 w-full h-[88%] object-cover rounded"
             />
             <div className="flex justify-between mt-2">
                 <button
                     onClick={startRecording}
-                    className="p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+                    className="absolute bottom-4 left-4 p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600  sm:text-sm"
                 >
                     Start Recording
                 </button>
                 <button
                     onClick={stopRecording}
-                    className="p-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
+                    className=" absolute bottom-4 right-4 p-2 bg-red-500 text-white rounded-lg hover:bg-red-600  sm:text-sm "
                 >
                     Stop Recording
                 </button>

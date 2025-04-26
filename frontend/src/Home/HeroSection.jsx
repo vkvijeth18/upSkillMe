@@ -5,51 +5,45 @@ import "react-lazy-load-image-component/src/effects/blur.css";
 import { Link } from "react-router-dom";
 export default function HeroSection() {
     return (
-        <div className="flex flex-col md:flex-row items-center justify-evenly bg-[#0f142f] px-10 md:px-20 py-10 mt-6 rounded-xl mx-4">
+        <div className="flex flex-col md:flex-row items-center justify-between bg-gradient-to-r from-[#0f142f] via-[#151a3a] to-[#0f142f] px-6 md:px-16 py-14 mt-8 rounded-3xl mx-4 shadow-2xl">
+
             {/* Left Content */}
-            <div className="md:w-1/2 text-white">
-                <h1 className="lg:text-4xl md:text-3xl sm:text-xl  font-bold leading-tight">
-                    Welcome to UpskillMe
+            <div className="md:w-1/2 text-white space-y-6">
+                <h1 className="text-3xl md:text-4xl font-extrabold leading-snug tracking-tight">
+                    Welcome to <span className="text-purple-400">UpskillMe</span>
                     <br />
-                    Your Gateway to Career Excellence
+                    Your Gateway to <span className="text-blue-400">Career Excellence</span>
                 </h1>
-                <p className="mt-6 lg:text-xl md:text-lg sm:text-sm text-gray-300">
-                    At UpskillMe, we believe that preparation is the key to success. Our
-                    platform is designed to help you ace your job interviews with
-                    confidence and competence. Whether you're a recent graduate, a career
-                    switcher, or a professional aiming to refine your skills, UpskillMe
-                    offers the perfect environment to practice and improve.
+
+                <p className="text-gray-400 text-base md:text-lg leading-relaxed">
+                    At UpskillMe, preparation meets opportunity.
+                    Whether you're a graduate, career switcher, or professional — we offer
+                    the perfect environment to sharpen your skills and ace your interviews.
                 </p>
 
                 <Link to="/interview">
-                    <div className="flex items-center mt-6">
-                        <button className="mt-6 px-6 py-3 bg-purple-600 hover:bg-purple-700 rounded-lg text-lg font-semibold w-[130px] h-[50px]">
-                            <p className="text-sm ">Get Started</p>
-                        </button>
-                    </div>
+                    <button className="mt-4 px-8 py-3 bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 transition-all rounded-full text-sm md:text-base font-semibold shadow-md">
+                        Get Started
+                    </button>
                 </Link>
             </div>
 
             {/* Right Side Image */}
-            <div className="md:w-1/2 flex justify-center items-center">
-                {/* Floating Image */}
+            <div className="md:w-1/2 flex justify-center items-center mt-10 md:mt-0">
                 <motion.div
-                    className="w-[60%] md:w-[60%] rounded-lg shadow-lg flex justify-center items-center"
-                    animate={{ y: [0, -10, 0] }} // Move up and down
-                    transition={{
-                        duration: 3,
-                        repeat: Infinity,
-                        ease: "easeInOut",
-                    }}
+                    className="w-[80%] md:w-[70%] rounded-2xl overflow-hidden "
+
                 >
                     <LazyLoadImage
-                        src="/interview.png" // Replace with the correct path
+                        src="../public/home.png"
                         alt="Interview Practice"
                         effect="blur"
-                        className="w-full h-auto rounded-lg"
+                        className="w-full h-auto object-cover"
                     />
                 </motion.div>
             </div>
+
         </div>
     );
+
 }
