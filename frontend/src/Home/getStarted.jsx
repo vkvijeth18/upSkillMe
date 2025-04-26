@@ -21,7 +21,7 @@ export default function HowToGetStarted() {
 
             {/* Neon Border Container */}
             <div className="relative w-full max-w-md md:max-w-4xl p-8 rounded-xl border-2 border-green-500/50 bg-black/90 shadow-xl hover:border-blue-400 hover:shadow-md">
-                <h2 className="text-2xl md:text-3xl font-bold text-center text-white mb-12">
+                <h2 className="lg:text-3xl md:text-2xl sm:text-xl font-bold text-center text-white mb-12">
                     How To Get Started?
                 </h2>
                 <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-[80%] h-[80%] bg-blue-400 opacity-30 rounded-full blur-3xl"></div>

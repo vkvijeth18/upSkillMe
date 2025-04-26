@@ -8,12 +8,12 @@ export default function HeroSection() {
         <div className="flex flex-col md:flex-row items-center justify-evenly bg-[#0f142f] px-10 md:px-20 py-10 mt-6 rounded-xl mx-4">
             {/* Left Content */}
             <div className="md:w-1/2 text-white">
-                <h1 className="text-3xl md:text-4xl font-bold leading-tight">
+                <h1 className="lg:text-4xl md:text-3xl sm:text-xl  font-bold leading-tight">
                     Welcome to UpskillMe
                     <br />
                     Your Gateway to Career Excellence
                 </h1>
-                <p className="mt-6 text-lg text-gray-300">
+                <p className="mt-6 lg:text-xl md:text-lg sm:text-sm text-gray-300">
                     At UpskillMe, we believe that preparation is the key to success. Our
                     platform is designed to help you ace your job interviews with
                     confidence and competence. Whether you're a recent graduate, a career
@@ -22,9 +22,11 @@ export default function HeroSection() {
                 </p>
 
                 <Link to="/interview">
-                    <button className="mt-6 px-6 py-3 bg-purple-600 hover:bg-purple-700 rounded-lg text-lg font-semibold">
-                        Get Started
-                    </button>
+                    <div className="flex items-center mt-6">
+                        <button className="mt-6 px-6 py-3 bg-purple-600 hover:bg-purple-700 rounded-lg text-lg font-semibold w-[130px] h-[50px]">
+                            <p className="text-sm ">Get Started</p>
+                        </button>
+                    </div>
                 </Link>
             </div>
 

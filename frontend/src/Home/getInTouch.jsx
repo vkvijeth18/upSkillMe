@@ -6,7 +6,7 @@ export default function GetInTouch() {
 
             {/* Container */}
             <div className="relative max-w-3xl w-full bg-white/10 backdrop-blur-md rounded-xl shadow-lg border border-white/20 p-8 text-center">
-                <h2 className="text-3xl md:text-4xl font-bold text-blue-400 mb-6">Get in Touch</h2>
+                <h2 className="lg:text-3xl md:text-2xl sm:text-xl font-bold text-blue-400 mb-6">Get in Touch</h2>
                 <p className="text-gray-300 mb-8">
                     Have any questions or suggestions? Drop your details and we'll get back to you!
                 </p>

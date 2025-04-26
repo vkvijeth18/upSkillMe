@@ -47,7 +47,7 @@ const Navbar = ({ isUserLoggedIn }) => {
     return (
         <div className="bg-[#1C1733] flex justify-between items-center h-16  min-w-[100px] mx-auto px-4 text-white rounded-lg font-mono mt-2 sm:p-6 ml-4 mr-4">
             {/* Logo */}
-            <h1 className="text-4xl font-bold text-[#0091df]">UpSkiLLMe.<span className='text-2xl'>inc</span></h1>
+            <h1 className="lg:text-4xl md:text-3xl sm:text-xl font-bold text-[#0091df]">UpSkiLLMe.<span className='lg:text-2xl md:text-xl  sm:text-sm'>inc</span></h1>
 
             {/* Desktop Navigation */}
             {/* //{//console.log(isUserLoggedIn)} */}
@@ -83,16 +83,16 @@ const Navbar = ({ isUserLoggedIn }) => {
             </ul>
 
             {/* Mobile Navigation Icon */}
-            <div onClick={handleNav} className="block md:hidden cursor-pointer">
+            <div onClick={handleNav} className="block md:hidden cursor-pointer z-10">
                 {nav ? <AiOutlineClose size={20} /> : <AiOutlineMenu size={20} />}
             </div>
 
             {/* Mobile Navigation Menu */}
             <ul
-                className={`fixed md:hidden left-0 top-0 w-[60%] h-full border-r border-gray-900 bg-[#1C1733] ease-in-out duration-500 ${nav ? 'left-0' : 'left-[-100%]'}`}
+                className={`fixed z-10 md:hidden left-0 top-0 w-[50%] h-full border-r border-gray-900 bg-[#1C1733] ease-in-out duration-500 ${nav ? 'left-0' : 'left-[-100%]'}`}
             >
                 {/* Mobile Logo */}
-                <h1 className="text-3xl font-bold text-[#0091df] m-4">UpSkiLLMe.<span className='text-2xl'>inc</span></h1>
+                <h1 className=" z-10 text-xl font-bold text-[#0091df] m-4">UpSkiLLMe.<span className='text-sm'>inc</span></h1>
 
                 {/* Mobile Navigation Items */}
                 {navItems
@@ -108,7 +108,7 @@ const Navbar = ({ isUserLoggedIn }) => {
                     .map((item) => (
                         <li
                             key={item.id}
-                            className="p-4 border-b rounded-xl hover:bg-[#00df9a] duration-300 hover:text-black cursor-pointer border-gray-600"
+                            className="p-4 border-b rounded-xl hover:bg-[#00df9a] duration-300 hover:text-black cursor-pointer border-gray-600 text-sm"
                         >
                             {item.onClick ? (
                                 <button onClick={(e) => {

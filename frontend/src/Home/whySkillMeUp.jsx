@@ -11,7 +11,7 @@ export default function WhyChooseUpskillMe() {
             <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-[80%] h-[60%] bg-purple-900 opacity-30 rounded-full blur-3xl"></div>
 
             {/* Title */}
-            <h2 className="text-3xl md:text-4xl font-bold text-center text-white mb-12">
+            <h2 className="lg:text-3xl md:text-2xl sm:text-xl font-bold text-center text-white mb-12">
                 Why Choose UpskillMe?
             </h2>
 
