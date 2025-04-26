@@ -1,24 +1,38 @@
 import React, { useState } from "react";
-import bgImg from "/bg.jpg";
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import { toast } from "react-hot-toast"
+import { toast } from "react-hot-toast";
+import { Eye, EyeOff } from "lucide-react"; // 👁️ Icons for toggle
+
 const AuthPage = () => {
     const [isLogin, setIsLogin] = useState(true);
     const [username, setUserName] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
-    const navigate = useNavigate()
+
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+    const navigate = useNavigate();
     const queryClient = useQueryClient();
+
     const signupUser = async (userData) => {
-        const response = await axios.post("https://upskillme-e2tz.onrender.com/api/v1/auth/signup", userData, { headers: { "Content-Type": "application/json" }, withCredentials: true });
+        const response = await axios.post(
+            "https://upskillme-e2tz.onrender.com/api/v1/auth/signup",
+            userData,
+            { headers: { "Content-Type": "application/json" }, withCredentials: true }
+        );
         return response.data;
     };
 
     const loginUser = async (userData) => {
-        const response = await axios.post("https://upskillme-e2tz.onrender.com/api/v1/auth/login", userData, { headers: { "Content-Type": "application/json" }, withCredentials: true });
+        const response = await axios.post(
+            "https://upskillme-e2tz.onrender.com/api/v1/auth/login",
+            userData,
+            { headers: { "Content-Type": "application/json" }, withCredentials: true }
+        );
         return response.data;
     };
 
@@ -26,14 +40,13 @@ const AuthPage = () => {
         mutationFn: signupUser,
         onSuccess: () => {
             setIsLogin(true);
-            toast.success("Signup successful:");
-            // Redirect or show success message
+            toast.success("Signup successful!");
             navigate("/");
             queryClient.invalidateQueries("authUser");
-
         },
         onError: (error) => {
-            toast.error("Signup failed:", error.response?.data?.message || error.message);
+            const errorMessage = error.response?.data?.error || error.response?.data?.message || error.message;
+            toast.error(errorMessage);
         },
     });
 
@@ -41,25 +54,24 @@ const AuthPage = () => {
         mutationFn: loginUser,
         onSuccess: () => {
             setIsLogin(true);
-            toast.success("Login successful:");
-            // Redirect or show success message
+            toast.success("Login successful!");
             navigate("/");
-
             queryClient.invalidateQueries("authUser");
         },
         onError: (error) => {
-            toast.error("Login failed:", error.response?.data?.message || error.message);
+            const errorMessage = error.response?.data?.error || error.response?.data?.message || error.message;
+            toast.error(errorMessage);
         },
     });
 
     const handleLogin = () => {
-        const userData = { username: username, password: password };
+        const userData = { username, password };
         loginMutation.mutate(userData);
     };
 
     const handleSignup = () => {
-        const userData = { username: username, email: email, password: password, confirmPassword: confirmPassword };
-        signupMutation.mutate(userData); // Triggers signup
+        const userData = { username, email, password, confirmPassword };
+        signupMutation.mutate(userData);
     };
 
     return (
@@ -70,8 +82,9 @@ const AuthPage = () => {
                         <h2 className="text-3xl font-bold text-center mb-8">Login</h2>
 
                         <div className="space-y-6">
+                            {/* Username Input */}
                             <div>
-                                <label className="block text-sm mb-2">User Name</label>
+                                <label className="block text-sm mb-2">Username</label>
                                 <input
                                     type="text"
                                     placeholder="Username"
@@ -82,16 +95,26 @@ const AuthPage = () => {
                                 />
                             </div>
 
+                            {/* Password Input */}
                             <div>
                                 <label className="block text-sm mb-2">Password</label>
-                                <input
-                                    type="password"
-                                    placeholder="Password"
-                                    value={password}
-                                    required
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    className="w-full p-3 rounded-md bg-[#1A1A3C] border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                />
+                                <div className="flex items-center bg-[#1A1A3C] border border-gray-700 rounded-md focus-within:ring-2 focus-within:ring-blue-500">
+                                    <input
+                                        type={showPassword ? "text" : "password"}
+                                        placeholder="Password"
+                                        value={password}
+                                        required
+                                        onChange={(e) => setPassword(e.target.value)}
+                                        className="w-full p-3 bg-transparent focus:outline-none rounded-md"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword((prev) => !prev)}
+                                        className="flex items-center justify-center px-3 text-gray-400"
+                                    >
+                                        {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                                    </button>
+                                </div>
                             </div>
 
                             <div className="flex justify-end">
@@ -123,6 +146,7 @@ const AuthPage = () => {
                         <h2 className="text-3xl font-bold text-center mb-8">Sign Up</h2>
 
                         <div className="space-y-6">
+                            {/* Username */}
                             <div>
                                 <label className="block text-sm mb-2">Username</label>
                                 <input
@@ -135,6 +159,7 @@ const AuthPage = () => {
                                 />
                             </div>
 
+                            {/* Email */}
                             <div>
                                 <label className="block text-sm mb-2">Email address</label>
                                 <input
@@ -147,28 +172,48 @@ const AuthPage = () => {
                                 />
                             </div>
 
+                            {/* Password */}
                             <div>
                                 <label className="block text-sm mb-2">Password</label>
-                                <input
-                                    type="password"
-                                    placeholder="Password"
-                                    value={password}
-                                    required
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    className="w-full p-3 rounded-md bg-[#1A1A3C] border border-gray-700 focus:outline-none focus:ring-2 focus:ring-green-500"
-                                />
+                                <div className="flex items-center bg-[#1A1A3C] border border-gray-700 rounded-md focus-within:ring-2 focus-within:ring-green-500">
+                                    <input
+                                        type={showPassword ? "text" : "password"}
+                                        placeholder="Password"
+                                        value={password}
+                                        required
+                                        onChange={(e) => setPassword(e.target.value)}
+                                        className="w-full p-3 bg-transparent focus:outline-none rounded-md"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword((prev) => !prev)}
+                                        className="flex items-center justify-center px-3 text-gray-400"
+                                    >
+                                        {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                                    </button>
+                                </div>
                             </div>
 
+                            {/* Confirm Password */}
                             <div>
                                 <label className="block text-sm mb-2">Confirm Password</label>
-                                <input
-                                    type="password"
-                                    placeholder="Confirm Password"
-                                    value={confirmPassword}
-                                    required
-                                    onChange={(e) => setConfirmPassword(e.target.value)}
-                                    className="w-full p-3 rounded-md bg-[#1A1A3C] border border-gray-700 focus:outline-none focus:ring-2 focus:ring-green-500"
-                                />
+                                <div className="flex items-center bg-[#1A1A3C] border border-gray-700 rounded-md focus-within:ring-2 focus-within:ring-green-500">
+                                    <input
+                                        type={showConfirmPassword ? "text" : "password"}
+                                        placeholder="Confirm Password"
+                                        value={confirmPassword}
+                                        required
+                                        onChange={(e) => setConfirmPassword(e.target.value)}
+                                        className="w-full p-3 bg-transparent focus:outline-none rounded-md"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowConfirmPassword((prev) => !prev)}
+                                        className="flex items-center justify-center px-3 text-gray-400"
+                                    >
+                                        {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                                    </button>
+                                </div>
                             </div>
 
                             <button
@@ -193,7 +238,6 @@ const AuthPage = () => {
             </div>
         </div>
     );
-
 };
 
 export default AuthPage;
