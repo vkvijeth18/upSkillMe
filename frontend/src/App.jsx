@@ -10,6 +10,7 @@ import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Toaster, toast } from 'react-hot-toast';
 import axios from 'axios';
+import InfinitySpinner from '../loaders/InfinitySpinner.jsx';
 
 function App() {
   const [isUserLoggedIn, setIsUserLoggedIn] = useState(false);
@@ -36,7 +37,7 @@ function App() {
   });
 
   if (isLoading) {
-    return <div>Loading...</div>; // Add a loading state here
+    return <div className='flex flex-col justify-center items-center w-screen h-screen'><InfinitySpinner /><div class="loading font-mono text-white">Loading<span class="dots"></span></div></div>; // Add a loading state here
   }
 
   return (

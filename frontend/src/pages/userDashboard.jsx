@@ -7,6 +7,7 @@ import { DashboardScreen } from '../dashboardUi/DashBoradScreen.jsx';
 import { InterviewDetailsScreen } from '../dashboardUi/InterviewDetailsScreen.jsx';
 import { ProfileScreen } from '../dashboardUi/ProfileScreen.jsx';
 import { Layout } from "../dashboardUi/LayoutComponent.jsx";
+import InfinitySpinner from '../../loaders/InfinitySpinner.jsx'
 function UserDashboard() {
     const [activeTab, setActiveTab] = useState('dashboard');
     const [activeInterview, setActiveInterview] = useState(null);
@@ -49,7 +50,7 @@ function UserDashboard() {
     if (userLoading || interviewLoading) {
         return (
             <div className="h-screen flex items-center justify-center bg-gray-900 text-white">
-                <p className="text-xl">Loading dashboard...</p>
+                <div className='flex flex-col justify-center items-center w-screen h-screen'><InfinitySpinner /><div class="loading font-mono text-white">Loading<span class="dots"></span></div></div>
             </div>
         );
     }
