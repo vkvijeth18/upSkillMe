@@ -101,10 +101,16 @@ export const getMe = async (req, res) => {
 export const logOut = async (req, res) => {
   try {
     // Use clearCookie instead of setting an empty cookie
+    res.cookie("jwt_token_UpSkillMe", "", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV !== "development",
+      expires: new Date(0), // Expire immediately
+      path: "/",
+    });
+
     res.clearCookie("jwt_token_UpSkillMe", {
       httpOnly: true,
       secure: process.env.NODE_ENV !== "development",
-      expires: new Date(Date.now()),
       path: "/",
     });
 
