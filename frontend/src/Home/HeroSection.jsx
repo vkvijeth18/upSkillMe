@@ -35,7 +35,7 @@ export default function HeroSection() {
 
                 >
                     <LazyLoadImage
-                        src="../public/home.png"
+                        src="/home.png"
                         alt="Interview Practice"
                         effect="blur"
                         className="w-full h-auto object-cover"
