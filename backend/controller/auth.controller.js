@@ -104,6 +104,7 @@ export const logOut = async (req, res) => {
     res.clearCookie("jwt_token_UpSkillMe", {
       httpOnly: true,
       secure: process.env.NODE_ENV !== "development",
+      expires: new Date(Date.now()),
       path: "/",
     });
 
