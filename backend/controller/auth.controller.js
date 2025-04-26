@@ -107,13 +107,6 @@ export const logOut = async (req, res) => {
       expires: new Date(0), // Expire immediately
       path: "/",
     });
-
-    res.clearCookie("jwt_token_UpSkillMe", {
-      httpOnly: true,
-      secure: process.env.NODE_ENV !== "development",
-      path: "/",
-    });
-
     return res.status(200).json({ success: true, data: "User Logged Out" });
   } catch (error) {
     console.log("Error in LogOut", error.message);
