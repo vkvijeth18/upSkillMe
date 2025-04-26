@@ -76,67 +76,79 @@ export function InterviewDetailsScreen({ interview }) {
     const score = analysisData?.score || 0;
 
     return (
-        <div className="bg-indigo-950 text-white p-6 rounded-lg">
-            <div className="flex justify-between mb-4">
-                <h2 className="text-xl font-bold">{interview?.interview_Type || 'Interview'}</h2>
-                <h2 className="text-xl font-bold">Interview_{interview?._id.slice(-4)}</h2>
+        <div className="bg-indigo-950 min-h-screen p-6 rounded-2xl text-white">
+            {/* Top Header Section */}
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+                <h2 className="text-2xl font-semibold">{interview?.interview_Type || 'Interview'}</h2>
+                <span className="text-md font-medium text-gray-400 mt-2 md:mt-0">
+                    Interview ID: <span className="font-bold text-white">#{interview?._id.slice(-4)}</span>
+                </span>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-                <div className="bg-white p-4 rounded-lg">
-                    <h3 className="text-black text-center font-bold mb-2">Performance Metrics</h3>
-                    <ResponsiveContainer width="100%" height={200}>
-                        <PieChart>
-                            <Pie
-                                data={pieData}
-                                dataKey="value"
-                                nameKey="name"
-                                cx="50%"
-                                cy="50%"
-                                outerRadius={80}
-                                label
-                            >
-                                {pieData.map((entry, index) => (
-                                    <Cell key={`cell-${index}`} fill={entry.color} />
-                                ))}
-                            </Pie>
-                            <Tooltip />
-                            <Legend />
-                        </PieChart>
-                    </ResponsiveContainer>
+            {/* Main Content */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                {/* Performance Metrics (Pie Chart) */}
+                <div className="bg-white rounded-2xl shadow-md p-8 flex flex-col justify-center">
+                    <h3 className="text-center text-indigo-950 font-bold text-lg mb-6">Performance Metrics</h3>
+
+                    <div className="flex justify-center items-center w-full h-64">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <PieChart>
+                                <Pie
+                                    data={pieData}
+                                    dataKey="value"
+                                    nameKey="name"
+                                    cx="50%"
+                                    cy="50%"
+                                    innerRadius={50}
+                                    outerRadius={90}
+                                    label
+                                >
+                                    {pieData.map((entry, index) => (
+                                        <Cell key={`cell-${index}`} fill={entry.color} />
+                                    ))}
+                                </Pie>
+                                <Tooltip />
+                            </PieChart>
+                        </ResponsiveContainer>
+                    </div>
                 </div>
 
-                <div className="bg-indigo-600 p-4 rounded-lg">
-                    <h3 className="text-lg font-bold text-center mb-4">Your Interview Feedback</h3>
-                    <div className="text-center mb-4">
-                        <div className="rounded-full bg-white text-indigo-900 h-24 w-24 flex items-center justify-center text-2xl font-bold">
-                            {overallScore}/100
-                        </div>
+                {/* Interview Feedback (Score + Recommendations) */}
+                <div className="bg-gradient-to-br from-indigo-700 to-indigo-500 p-6 rounded-2xl shadow-md flex flex-col items-center">
+                    <h3 className="text-lg font-bold mb-6 text-center">Interview Feedback</h3>
+                    <div className="bg-white text-indigo-700 rounded-full h-28 w-28 flex items-center justify-center text-3xl font-extrabold shadow-lg mb-6">
+                        {overallScore}/100
                     </div>
-                    <div className="space-y-2">
-                        {recommendations?.map((recommendation, index) => (
-                            <p key={index} className="text-sm">• {recommendation}</p>
+                    <div className="w-full space-y-2 text-center">
+                        {recommendations?.map((rec, index) => (
+                            <p key={index} className="text-sm leading-relaxed text-white">• {rec}</p>
                         ))}
                     </div>
                 </div>
 
-                <div className="bg-white p-4 rounded-lg col-span-2">
-                    <h3 className="text-black text-center font-bold mb-2">Progress Chart</h3>
-                    <ResponsiveContainer width="100%" height={200}>
-                        <BarChart
-                            data={barData}
-                            margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-                        >
-                            <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis dataKey="name" />
-                            <YAxis domain={[0, 10]} />
-                            <Tooltip />
-                            <Legend />
-                            <Bar dataKey="value" fill="#e67e22" />
-                        </BarChart>
-                    </ResponsiveContainer>
+                {/* Progress Chart (Bar Graph) */}
+                <div className="col-span-1 md:col-span-2 bg-white rounded-2xl shadow-md p-6">
+                    <h3 className="text-center text-indigo-950 font-bold text-lg mb-4">Progress Overview</h3>
+                    <div className="h-72">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <BarChart
+                                data={barData}
+                                margin={{ top: 10, right: 30, left: 20, bottom: 5 }}
+                            >
+                                <CartesianGrid strokeDasharray="3 3" />
+                                <XAxis dataKey="name" />
+                                <YAxis domain={[0, 10]} />
+                                <Tooltip />
+                                <Bar dataKey="value" fill="#00df9a" radius={[10, 10, 0, 0]} />
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </div>
                 </div>
+
             </div>
         </div>
+
     );
 }

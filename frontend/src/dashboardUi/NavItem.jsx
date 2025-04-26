@@ -1,10 +1,13 @@
-export function NavItem({ label, active, onClick }) {
+export function NavItem({ icon, label, active, onClick }) {
     return (
         <button
             onClick={onClick}
-            className={`p-2 text-left rounded ${active ? 'text-blue-400' : 'text-white'} hover:bg-[#00df9a] rounded-xl cursor-pointer duration-300 hover:text-black`}
+            className={`flex items-center gap-3 px-4 py-2 text-sm rounded-lg 
+                    ${active ? 'bg-[#00df9a] text-white' : 'text-gray-400 hover:bg-[#00df9a] hover:text-white'}
+                    transition-all duration-300 w-full text-left`}
         >
-            {label}
+            {icon}
+            <span>{label}</span>
         </button>
     );
 }

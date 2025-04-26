@@ -16,10 +16,10 @@ export function DashboardScreen({ interviews, setActiveInterview, setActiveTab }
     };
 
     return (
-        <div className="p-6 rounded-lg"> {/*Here*/}
-            <div className="grid grid-cols-2 gap-4">
+        <div className="flex flex-col p-6 rounded-lg"> {/*Here*/}
+            <div className="grid lg:grid-cols-2 md:grid-cols-2 sm:grid-col-1 gap-4">
                 {currentInterviews.length === 0 ? (
-                    <div className="col-span-2 text-center text-zinc-50 text-2xl font-bold">
+                    <div className="col-span-2  text-center text-zinc-50 text-2xl font-bold">
                         No Interviews Found
                     </div>
                 ) : (

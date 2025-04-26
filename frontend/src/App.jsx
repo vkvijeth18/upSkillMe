@@ -43,7 +43,7 @@ function App() {
   return (
     <>
       <Toaster position="top-center" reverseOrder={false} />
-      {location.pathname !== "/signup" && location.pathname !== "/takeinterview" && <NavBar isUserLoggedIn={isUserLoggedIn} />}
+      {location.pathname !== "/signup" && location.pathname !== "/takeinterview" && location.pathname !== "/profile" && <NavBar isUserLoggedIn={isUserLoggedIn} />}
 
       <Routes>
         <Route path="/" element={<HomePage />} />

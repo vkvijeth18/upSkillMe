@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-hot-toast';
+import { Home, Info, PhoneCall, User, LogIn, LogOut } from 'lucide-react';
 
 const Navbar = ({ isUserLoggedIn }) => {
     const [nav, setNav] = useState(false);
@@ -36,13 +37,14 @@ const Navbar = ({ isUserLoggedIn }) => {
     }
 
     const navItems = [
-        { id: '1', text: 'Home', link: "/" },
-        { id: '2', text: 'About Us', link: "/" },
-        { id: '3', text: 'Contact Us', link: "/" },
-        { id: '4', text: 'Profile', link: "/profile" },
-        { id: '5', text: 'Sign Up', link: "/signup" },
-        { id: '6', text: 'Log Out', link: "/logout", onClick: handleLogOut },
+        { id: '1', text: 'Home', link: "/", icon: <Home size={18} /> },
+        { id: '2', text: 'About Us', link: "/", icon: <Info size={18} /> },
+        { id: '3', text: 'Contact Us', link: "/", icon: <PhoneCall size={18} /> },
+        { id: '4', text: 'Profile', link: "/profile", icon: <User size={18} /> },
+        { id: '5', text: 'Sign Up', link: "/signup", icon: <LogIn size={18} /> },
+        { id: '6', text: 'Log Out', link: "/logout", icon: <LogOut size={18} />, onClick: handleLogOut },
     ];
+
 
     return (
         <div className="bg-gradient-to-r from-[#1C1733] to-[#221b3a] flex justify-between items-center h-16 min-w-[100px] mx-auto px-6 text-white rounded-2xl shadow-lg  mt-4 sm:px-10 ml-4 mr-4">
@@ -63,8 +65,9 @@ const Navbar = ({ isUserLoggedIn }) => {
                     .map((item) => (
                         <li
                             key={item.id}
-                            className="relative group p-2 rounded-md  transition-all duration-300  hover:bg-[#00df9a] hover:text-black  cursor-pointer font-medium text-md"
+                            className="relative group p-2 rounded-md flex items-center gap-2 transition-all duration-300 hover:bg-[#00df9a] hover:text-black cursor-pointer font-medium text-md"
                         >
+                            {item.icon}
                             {item.onClick ? (
                                 <button onClick={(e) => { e.preventDefault(); item.onClick(); }}>
                                     {item.text}
@@ -72,10 +75,10 @@ const Navbar = ({ isUserLoggedIn }) => {
                             ) : (
                                 <Link to={item.link}>{item.text}</Link>
                             )}
-                            <button className="absolute left-0 -bottom-1 w-0 h-[2px]"></button>
                         </li>
                     ))}
             </ul>
+
 
             {/* Mobile Navigation Icon */}
             <div onClick={handleNav} className="block md:hidden cursor-pointer z-20">
@@ -86,12 +89,10 @@ const Navbar = ({ isUserLoggedIn }) => {
             <ul
                 className={`fixed z-10 md:hidden top-0 left-0 w-[60%] h-full bg-[#1C1733] rounded-tr-3xl rounded-br-3xl p-8 shadow-2xl ease-in-out duration-500 ${nav ? 'translate-x-0' : '-translate-x-full'}`}
             >
-                {/* Mobile Logo */}
                 <h1 className="text-2xl md:text-3xl font-extrabold tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-[#00df9a] to-[#0091df] mb-3">
                     UpSkiLLMe<span className="text-xs ml-1 text-gray-400">.inc</span>
                 </h1>
 
-                {/* Mobile Navigation Items */}
                 {navItems
                     .filter(item => {
                         if (item.text === "Sign Up" && isUserLoggedIn) return false;
@@ -101,23 +102,32 @@ const Navbar = ({ isUserLoggedIn }) => {
                     .map((item) => (
                         <li
                             key={item.id}
-                            onClick={() => {
-                                handleNav(); // close the mobile menu
-                                if (item.onClick) item.onClick(); // also run item's onClick if exists
-                            }}
-                            className="p-3 mb-2 rounded-md hover:bg-[#00df9a] hover:text-black transition-all cursor-pointer font-medium text-sm"
+                            className="p-3 mb-2 flex items-center gap-3 rounded-md hover:bg-[#00df9a] hover:text-black transition-all cursor-pointer font-medium text-sm"
                         >
+                            {item.icon}
                             {item.onClick ? (
-                                <button>
+                                <button
+                                    onClick={() => {
+                                        handleNav(); // close menu
+                                        item.onClick(); // logout
+                                    }}
+                                    className="text-left"
+                                >
                                     {item.text}
                                 </button>
                             ) : (
-                                <Link to={item.link}>{item.text}</Link>
+                                <Link
+                                    to={item.link}
+                                    onClick={handleNav} // close menu after clicking the link
+                                    className="w-full"
+                                >
+                                    {item.text}
+                                </Link>
                             )}
                         </li>
                     ))}
-
             </ul>
+
 
         </div>
     );
