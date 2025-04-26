@@ -4,12 +4,11 @@ const generateTokenAndSetCookies = async (userId, res) => {
   const token = jwt.sign({ userId }, process.env.JWT_SECRET, {
     expiresIn: "15d",
   });
-  res.cookie("jwt_token_UpSkillMe", "", {
+  res.cookie("jwt_token_UpSkillMe", token, {
+    maxAge: 15 * 24 * 60 * 60 * 1000,
     httpOnly: true,
-    sameSite: "None", // MUST match
-    secure: process.env.NODE_ENV !== "development", // MUST match
-    expires: new Date(0), // Expire immediately
-    path: "/", // Default, but explicit is better
+    sameSite: "None",
+    secure: process.env.NODE_ENV !== "development",
   });
 };
 export default generateTokenAndSetCookies;
