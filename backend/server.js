@@ -12,7 +12,7 @@ import UploadToCloudRoute from "./routes/fileUpload/uploadToCloud.route.js";
 import cookieParser from "cookie-parser";
 import { v2 as cloudinary } from "cloudinary";
 import User from "./model/user.model.js"; // or any model you have
-
+import path from "path";
 // Keep MongoDB alive every 5 mins
 setInterval(async () => {
   try {
@@ -54,6 +54,11 @@ app.use("/api/v1/uploadtocloud", protectRoute, UploadToCloudRoute);
 const PORT = process.env.PORT || 5000;
 console.log(process.env.PORT);
 // Somewhere in your Express setup
+app.use(express.static(path.join(__dirname, "frontend", "dist"))); // or 'build'
+
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "frontend", "dist", "index.html"));
+});
 app.get("/health", (req, res) => {
   res.status(200).json({ message: "Node backend is alive" });
 });
