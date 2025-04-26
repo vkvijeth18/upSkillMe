@@ -13,6 +13,7 @@ import cookieParser from "cookie-parser";
 import { v2 as cloudinary } from "cloudinary";
 import User from "./model/user.model.js"; // or any model you have
 import path from "path";
+import { fileURLToPath } from "url";
 // Keep MongoDB alive every 5 mins
 setInterval(async () => {
   try {
