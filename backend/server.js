@@ -24,6 +24,8 @@ setInterval(async () => {
 }, 1000 * 60 * 5);
 
 dotenv.config();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 
@@ -53,6 +55,7 @@ app.use("/api/v1/uploadtocloud", protectRoute, UploadToCloudRoute);
 // Ensure protectRoute is applied
 const PORT = process.env.PORT || 5000;
 console.log(process.env.PORT);
+
 // Somewhere in your Express setup
 app.use(express.static(path.join(__dirname, "frontend", "dist"))); // or 'build'
 
