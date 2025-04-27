@@ -105,10 +105,10 @@ export function ProfileScreen({ user }) {
     };
     if (loading) {
         return (
-            <div className="flex justify-center items-center min-h-[500px]">
+            <div className="flex flex-col justify-center items-center min-h-[500px]">
                 <div className="text-white text-lg"> <InfinitySpinner /></div>
-                <p className="text-gray-300 text-lg animate-pulse">Loading, please wait...</p>
-            </div>
+                <div class="loading font-mono text-white">Loading<span class="dots"></span></div>
+            </div >
         );
     }
     return (
