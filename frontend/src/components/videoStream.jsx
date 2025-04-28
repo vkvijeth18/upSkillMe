@@ -1,116 +1,125 @@
 import React, { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import useInterviewStore from "../Store/InterviewStore";
-const VideoStream = ({ onRecordingStop }) => {
+import { useNavigate } from "react-router-dom";
+
+const VideoStream = () => {
     const videoRef = useRef(null);
     const mediaRecorderRef = useRef(null);
     const chunksRef = useRef([]);
     const InterviewType = useInterviewStore((state) => state.interviewType);
+    const navigate = useNavigate();
+    const [isRecording, setIsRecording] = useState(false);
+    const [stream, setStream] = useState(null);
+
     useEffect(() => {
         startVideoStream();
-        return () => stopVideoStream();
+
+        return () => {
+            stopRecordingProperly();
+            stopVideoStream();
+        };
     }, []);
 
     const startVideoStream = async () => {
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+            const userStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+            setStream(userStream);
+
             if (videoRef.current) {
-                videoRef.current.srcObject = stream;
+                videoRef.current.srcObject = userStream;
             }
 
-            const recorder = new MediaRecorder(stream);
+            const recorder = new MediaRecorder(userStream);
 
-            recorder.ondataavailable = event => {
+            recorder.ondataavailable = (event) => {
                 if (event.data.size > 0) {
                     chunksRef.current.push(event.data);
                 }
             };
 
-            recorder.onstop = handleStop;
+            recorder.onstop = () => {
+                console.log("Recorder fully stopped. Preparing upload...");
+                uploadVideo();
+            };
 
             mediaRecorderRef.current = recorder;
+
+            // Start recording after setup
+            startRecording();
         } catch (error) {
             console.error("Error accessing media devices.", error);
         }
     };
 
-    const stopVideoStream = () => {
-        if (videoRef.current?.srcObject) {
-            videoRef.current.srcObject.getTracks().forEach(track => track.stop());
-        }
-    };
-
     const startRecording = () => {
-        if (mediaRecorderRef.current) {
-            chunksRef.current = []; // Clear previous recordings
-            mediaRecorderRef.current.start();
-            //console.log("Recording started");
+        if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "recording") {
+            chunksRef.current = []; // Reset chunks
+            mediaRecorderRef.current.start(1000); // record in 1s chunks (optional)
+            setIsRecording(true);
+            console.log("Recording started...");
         }
     };
 
-    const stopRecording = () => {
+    const stopRecordingProperly = () => {
         if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
             mediaRecorderRef.current.stop();
-            //console.log("Recording stopped");
+            setIsRecording(false);
+            console.log("Stopping recording...");
         }
     };
 
-    const handleStop = async () => {
+    const uploadVideo = async () => {
         if (chunksRef.current.length === 0) {
-            console.error("No recorded data available.");
+            console.error("No recorded chunks to upload.");
             return;
         }
 
         const blob = new Blob(chunksRef.current, { type: "video/webm" });
-        chunksRef.current = []; // Clear after processing
+        chunksRef.current = []; // Clear after creating blob
 
         const formData = new FormData();
         formData.append("video", blob, "interview.webm");
         formData.append("interviewType", InterviewType);
-        //console.log("Inteview Type:", InterviewType);
+
         try {
-            //console.log("Video Stream uploading");
             const response = await axios.post("https://upskillme-e2tz.onrender.com/api/v1/uploadtocloud", formData, {
                 headers: { "Content-Type": "multipart/form-data" },
-                withCredentials: true,
+                withCredentials: true, // ✅ This ensures cookies are sent
             });
 
             if (response.status === 200) {
-                //console.log("Video uploaded successfully", response.data);
+                console.log("✅ Video uploaded successfully");
             } else {
-                console.error("Error uploading video");
+                console.error("❌ Error uploading video");
             }
         } catch (error) {
-            console.error("Error uploading video", error);
+            console.error("❌ Upload failed", error);
         }
+    };
 
-        if (onRecordingStop) {
-            onRecordingStop();
+    const stopVideoStream = () => {
+        if (stream) {
+            stream.getTracks().forEach((track) => track.stop());
+            setStream(null);
         }
     };
 
     return (
-        <div className="w-full h-full p-4 bg-gray-800 border-4 border-green-500 rounded-lg flex-1">
+        <div className="w-full h-full p-4 bg-gray-800 border-4 border-green-500 rounded-lg flex-1 relative">
             <video
                 ref={videoRef}
                 autoPlay
+                playsInline
                 muted
                 className="mt-4 w-full h-[88%] object-cover rounded"
             />
-            <div className="flex justify-between mt-2">
-                <button
-                    onClick={startRecording}
-                    className="absolute bottom-4 left-4 p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600  sm:text-sm"
-                >
-                    Start Recording
-                </button>
-                <button
-                    onClick={stopRecording}
-                    className=" absolute bottom-4 right-4 p-2 bg-red-500 text-white rounded-lg hover:bg-red-600  sm:text-sm "
-                >
-                    Stop Recording
-                </button>
-            </div>
+            {isRecording && (
+                <div className="absolute top-2 right-2 flex items-center space-x-2 bg-red-600 bg-opacity-70 px-2 py-1 rounded text-xs text-white">
+                    <span className="h-2 w-2 bg-red-500 rounded-full animate-pulse"></span>
+                    <span>REC</span>
+                </div>
+            )}
         </div>
     );
 };

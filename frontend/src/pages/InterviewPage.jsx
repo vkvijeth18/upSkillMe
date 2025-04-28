@@ -4,11 +4,12 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import useResumeStore from "../Store/ResumeStore";
 import useInterviewStore from "../Store/InterviewStore";
 import axios from "axios";
-import Scene from "./model"; // Import the Scene component
+import Scene from "./model"; // Avatar component
 import { toast } from "react-hot-toast";
 import VideoStream from "../components/videoStream";
+
 const INTERVIEW_TIME_LIMIT = 20 * 60 * 1000; // 20 minutes
-const RESPONSE_TIME_LIMIT = 30000; // 30 seconds
+const RESPONSE_TIME_LIMIT = 40000; // 30 seconds
 const GEMINI_API_KEY = "AIzaSyCo1bGaPS2Ucl1rIC8G76k-TGmU7NE5XYI";
 
 export default function InterviewPage() {
@@ -16,244 +17,143 @@ export default function InterviewPage() {
     const InterviewType = useInterviewStore((state) => state.interviewType);
     const navigate = useNavigate();
 
+    // Primary state
     const [questionList, setQuestionList] = useState([]);
     const [question, setQuestion] = useState("");
     const [timer, setTimer] = useState(INTERVIEW_TIME_LIMIT / 1000);
     const [responses, setResponses] = useState({});
     const [currentResponse, setCurrentResponse] = useState("");
-    const [voices, setVoices] = useState([]);
-    const [selectedVoice, setSelectedVoice] = useState(null);
-    const [isIntroduced, setIsIntroduced] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [isListeningActive, setIsListeningActive] = useState(false);
     const [isSpeaking, setIsSpeaking] = useState(false);
-    const [manualListening, setManualListening] = useState(false);
-    const [debug, setDebug] = useState({
-        resumeLoaded: false,
-        questionsGenerated: false,
-        introComplete: false,
-        currentStep: "initializing"
-    });
     const [phonemes, setPhonemes] = useState("");
-    const [mediaRecorder, setMediaRecorder] = useState(null);
-    const [recordedChunks, setRecordedChunks] = useState([]);
-    const videoRef = useRef(null);
 
+    // New conversation state
+    const [conversationHistory, setConversationHistory] = useState([]);
+    const [isProcessingResponse, setIsProcessingResponse] = useState(false);
+    const [emotionState, setEmotionState] = useState("neutral"); // track detected emotion
 
+    // Voice state
+    const [voices, setVoices] = useState([]);
+    const [selectedVoice, setSelectedVoice] = useState(null);
+    const selectedVoiceRef = useRef(null);
+
+    const [isIntroduced, setIsIntroduced] = useState(false);
+    const [currentQuestionIndex, setCurrentQuestionIndex] = useState(-1);
+    const [interviewStage, setInterviewStage] = useState("greeting"); // greeting, smalltalk, questions, conclusion
+
+    // Video recording sta
+
+    // Refs for tracking session state
     const interviewTimer = useRef(null);
     const silenceTimer = useRef(null);
     const speechUtterance = useRef(null);
     const recognition = useRef(null);
-    const isListening = useRef(false);
-    const isInterviewOver = useRef(false);
-    const currentQuestion = useRef("");
-    const questionsProcessed = useRef(0);
-    const recognitionAttempts = useRef(0);
     const processingAction = useRef(false);
-    const currentQuestionsList = useRef([]);
-    const selectedVoiceRef = useRef(null); // Store selected voice in ref for consistency
+    const isInterviewOver = useRef(false);
+    const genAI = useRef(null);
+    const aiModel = useRef(null);
 
-    // Immediately log initial state on component mount
+    // Initialize the interview
     useEffect(() => {
-        // //console.log("Component mounted. Initial state:");
-        // //console.log("Resume text available:", !!resumeText);
-        // //console.log("Interview type:", InterviewType);
-        // Fallback questions in case API fails
-        const fallbackQuestions = [
-            "I am curious to know about you. Could you tell me about yourself?",
-            "What are your greatest strengths?",
-            "What do you consider to be your weaknesses?",
-            "Why are you interested in this position?",
-            "Where do you see yourself in five years?",
-            "Can you describe a challenging situation you faced at work and how you handled it?",
-            "What are your salary expectations?",
-            "Why should we hire you?",
-            "Do you have any questions for me?",
-            "What motivates you to do your best work?"
-        ];
-
+        // Setup basics
         loadVoices();
+        initializeAI();
+
+        // Request permissions and start interview timer
         requestMicrophonePermission()
             .then(() => requestCameraPermission())
             .then(() => {
                 startInterviewTimer();
-                startVideoStream();
+                setIsLoading(false);
             })
             .catch(() => {
-                toast.error("Please provide all required permissions.");
+                toast.error("Please provide camera and microphone permissions for the interview.");
                 navigate("/interview");
             });
 
-        // Set fallback questions if resume is empty or not available
-        if (!resumeText || resumeText.trim() === "") {
-            // //console.log("No resume text found, using fallback questions");
-            currentQuestionsList.current = [...fallbackQuestions];
-            setQuestionList(fallbackQuestions);
-            setDebug(prev => ({ ...prev, resumeLoaded: false, questionsGenerated: true, currentStep: "using fallback questions" }));
-            setTimeout(() => {
-                introduceInterview();
-            }, 1000);
-        } else {
-            // //console.log("Resume text found, will generate custom questions");
-            setDebug(prev => ({ ...prev, resumeLoaded: true, currentStep: "resume loaded" }));
-            generateQuestionList();
-        }
+        // Generate questions based on resume
+        generateQuestionList();
 
-        // window.addEventListener("beforeunload", endInterview);
-        // document.addEventListener("visibilitychange", handleVisibilityChange);
+        // Clean up on unmount
+        return () => {
+            clearInterval(interviewTimer.current);
+            clearTimeout(silenceTimer.current);
+            stopListening();
+            if (speechUtterance.current) window.speechSynthesis.cancel();
 
-        // return () => {
-        //     window.removeEventListener("beforeunload", endInterview);
-        //     document.removeEventListener("visibilitychange", handleVisibilityChange);
-        //     clearInterval(interviewTimer.current);
-        //     clearTimeout(silenceTimer.current);
-        //     stopListening();
-        //     if (speechUtterance.current) window.speechSynthesis.cancel();
-        //     stopVideoStream();
-        // };
+        };
     }, []);
 
-    // Update ref when selectedVoice changes to maintain consistency
+    // Initialize AI helper
+    const initializeAI = () => {
+        genAI.current = new GoogleGenerativeAI(GEMINI_API_KEY);
+        aiModel.current = genAI.current.getGenerativeModel({ model: "gemini-1.5-flash" });
+    };
+
+    // Update voice ref when selectedVoice changes
     useEffect(() => {
         if (selectedVoice) {
             selectedVoiceRef.current = selectedVoice;
         }
     }, [selectedVoice]);
 
-    // Handle changes to the introduced state
+    // When questions are loaded and introduction is complete, start with greetings
     useEffect(() => {
-        // //console.log("Introduction state changed:", isIntroduced);
-        setDebug(prev => ({ ...prev, introComplete: isIntroduced }));
-
-        if (isIntroduced && currentQuestionsList.current.length > 0 && !processingAction.current) {
-            // //console.log("Introduction complete and questions available, moving to first question");
-            setTimeout(() => moveToNextQuestion(), 1500); // Added delay before moving to the first question
+        if (isIntroduced && questionList.length > 0 && currentQuestionIndex === -1 && !processingAction.current) {
+            setTimeout(() => startInterviewConversation(), 1000);
         }
-    }, [isIntroduced]);
-
-    // Handle changes to the question list
-    useEffect(() => {
-        // ////console.log("Question list updated. Length:", questionList.length);
-        setDebug(prev => ({ ...prev, questionsGenerated: questionList.length > 0 }));
-
-        // Update our ref to match the state
-        currentQuestionsList.current = [...questionList];
-
-        if (questionList.length > 0 && isIntroduced && !question && !processingAction.current) {
-            ////console.log("Ready to start first question");
-            setTimeout(() => moveToNextQuestion(), 1000);
-        }
-    }, [questionList]);
-
-    // Monitor listening state
-    useEffect(() => {
-        if (isListeningActive && !manualListening) {
-            //console.log("Listening activated, starting silence timer");
-            // Make sure we move on even if speech recognition is stuck
-            silenceTimer.current = setTimeout(() => {
-                //console.log("Silence timer triggered - no response detected");
-                stopListening();
-                speakResponse("I didn't hear your response. Let's move on.", () => {
-                    questionsProcessed.current += 1;
-                    moveToNextQuestion();
-                });
-            }, RESPONSE_TIME_LIMIT);
-
-            return () => {
-                clearTimeout(silenceTimer.current);
-            };
-        }
-    }, [isListeningActive, manualListening]);
-
+    }, [isIntroduced, questionList, currentQuestionIndex]);
 
     const loadVoices = () => {
-        //console.log("Loading voices...");
         const synth = window.speechSynthesis;
 
-        // Initialize voices first
-        let availableVoices = synth.getVoices();
-
         const updateVoices = () => {
-            availableVoices = synth.getVoices();
-            //console.log(`Found ${availableVoices.length} voices`);
+            const availableVoices = synth.getVoices();
 
             if (availableVoices.length > 0) {
                 setVoices(availableVoices);
-                // Prioritize female voices with name containing "female" or "samantha"
+                // Try to find a female voice
                 const femaleVoice = availableVoices.find(
                     (v) => v.name.toLowerCase().includes("female") ||
                         v.name.toLowerCase().includes("samantha")
                 );
-                const selectedV = femaleVoice || availableVoices[0];
-                //console.log("Selected voice:", selectedV?.name || "None");
-                setSelectedVoice(selectedV);
-                selectedVoiceRef.current = selectedV; // Set the voice reference
-                setIsLoading(false);
-            } else {
-                // If no voices available yet, try again in a moment
-                setTimeout(updateVoices, 500);
+                const voiceToUse = femaleVoice || availableVoices[0];
+                setSelectedVoice(voiceToUse);
+                selectedVoiceRef.current = voiceToUse;
             }
         };
 
+        // Try to get voices immediately
+        updateVoices();
+
+        // Also set up the onvoiceschanged event
         if (synth.onvoiceschanged !== undefined) {
             synth.onvoiceschanged = updateVoices;
         }
 
-        // Try immediately and also with a delay as a fallback
-        updateVoices();
-
-        // Final fallback if voices still not loaded after 3 seconds
+        // Final fallback if voices still not loaded after 2 seconds
         setTimeout(() => {
-            if (selectedVoice === null && synth.getVoices().length > 0) {
-                const voices = synth.getVoices();
-                setVoices(voices);
-                const femaleVoice = voices.find(
-                    (v) => v.name.toLowerCase().includes("female") ||
-                        v.name.toLowerCase().includes("samantha")
-                );
-                const voiceToUse = femaleVoice || voices[0];
-                setSelectedVoice(voiceToUse);
-                selectedVoiceRef.current = voiceToUse;
-                setIsLoading(false);
+            if (!selectedVoice && synth.getVoices().length > 0) {
+                updateVoices();
             }
-        }, 3000);
+        }, 2000);
     };
-
-    const fetchPhonemes = async (text) => {
-        try {
-            const response = await axios.post(
-                "https://upskillme-e2tz.onrender.com/api/v1/mockinterview/getPhenomes",
-                { text },
-                { headers: { "Content-Type": "application/json" }, withCredentials: true }
-            );
-
-            if (response.data && response.data.phonemes) {
-                setPhonemes(response.data.phonemes); // Update state
-            } else {
-                console.error("❌ Invalid phoneme response:", response.data);
-            }
-        } catch (error) {
-            console.error("❌ Error fetching phonemes:", error);
-        }
-    };
-
 
     const requestMicrophonePermission = async () => {
-        //console.log("Requesting microphone permission...");
         try {
             await navigator.mediaDevices.getUserMedia({ audio: true });
-            //console.log("Microphone permission granted");
+            return true;
         } catch (error) {
             console.error("Microphone permission denied:", error);
-            toast.error("Microphone access is required for the interview. Please reload the page and allow microphone access.");
+            throw error;
         }
     };
 
     const requestCameraPermission = async () => {
-        //console.log("Requesting camera permission...");
         try {
             await navigator.mediaDevices.getUserMedia({ video: true });
-            //console.log("Camera permission granted");
+            return true;
         } catch (error) {
             console.error("Camera permission denied:", error);
             throw error;
@@ -261,7 +161,6 @@ export default function InterviewPage() {
     };
 
     const startInterviewTimer = () => {
-        //console.log("Starting interview timer...");
         interviewTimer.current = setInterval(() => {
             setTimer((prev) => {
                 if (prev <= 1 || isInterviewOver.current) {
@@ -274,10 +173,111 @@ export default function InterviewPage() {
         }, 1000);
     };
 
+    const generateQuestionList = async () => {
+        // Default questions in case API call fails
+        const defaultQuestions = [
+            "Tell me about yourself.",
+            "What are your greatest strengths?",
+            "What do you consider to be your weaknesses?",
+            "Why are you interested in this position?",
+            "Where do you see yourself in five years?",
+            "Can you describe a challenging situation you faced at work and how you handled it?",
+            "What are your salary expectations?",
+            "Why should we hire you?",
+            "Do you have any questions for me?",
+            "What motivates you to do your best work?"
+        ];
+
+        try {
+            const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+            const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+            const prompt = `Generate 10 ${InterviewType} interview questions based on this resume: ${resumeText || "Generic resume"}.
+                Respond with only the questions in a numbered list format, no explanations, no extra text, make sure based on this ${InterviewType} only.`;
+
+            const result = await model.generateContent({
+                contents: [{ parts: [{ text: prompt }] }]
+            });
+
+            const aiResponse = result?.response?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+
+            if (!aiResponse) {
+                console.warn("No response from API, using default questions");
+                setQuestionList(defaultQuestions);
+                introduceInterview();
+                return;
+            }
+
+            const questions = aiResponse
+                .split(/\n+/)
+                .map((q) => q.replace(/^\d+[).]?\s*/, "").trim())
+                .filter((q) => q.length > 5);
+
+            if (questions.length === 0) {
+                console.warn("No valid questions from API, using defaults");
+                setQuestionList(defaultQuestions);
+            } else {
+                console.log(`Generated ${questions.length} questions from API`);
+                // Don't force "Tell me about yourself" - allow AI to generate appropriate questions
+                const finalQuestions = questions.slice(0, 10);
+                setQuestionList(finalQuestions);
+            }
+
+            introduceInterview();
+        } catch (error) {
+            console.error("Error generating questions:", error);
+            setQuestionList(defaultQuestions);
+            introduceInterview();
+        }
+    };
+
+    const introduceInterview = () => {
+        if (processingAction.current) return;
+        processingAction.current = true;
+
+        speakResponse("Hello! I'm Camalia, your AI interviewer. I'll be conducting your interview today. How are you feeling?", () => {
+            // Add this to conversation history
+            updateConversationHistory("interviewer", "Hello! I'm Camalia, your AI interviewer. I'll be conducting your interview today. How are you feeling?");
+            setIsIntroduced(true);
+            processingAction.current = false;
+            startListening(); // Start listening immediately for their response
+        });
+    };
+
+    // Start the interview conversation flow
+    const startInterviewConversation = async () => {
+        if (interviewStage === "greeting") {
+            // We already greeted, now conduct some small talk based on their response
+            setInterviewStage("smalltalk");
+            startListening();
+        } else if (interviewStage === "questions" && currentQuestionIndex === -1) {
+            // Begin formal questions
+            moveToNextQuestion();
+        }
+    };
+
+    // Add new entry to conversation history
+    const updateConversationHistory = (speaker, text) => {
+        setConversationHistory(prev => [...prev, { speaker, text, timestamp: Date.now() }]);
+    };
+
+    const fetchPhonemes = async (text) => {
+        try {
+            const response = await axios.post(
+                "https://upskillme-e2tz.onrender.com/api/v1/mockinterview/getPhenomes",
+                { text },
+                { headers: { "Content-Type": "application/json" }, withCredentials: true }
+            );
+
+            if (response.data && response.data.phonemes) {
+                setPhonemes(response.data.phonemes);
+            }
+        } catch (error) {
+            console.error("Error fetching phonemes:", error);
+        }
+    };
+
     const speakResponse = async (text, callback) => {
-        //console.log("Speaking:", text);
         if (!selectedVoiceRef.current || isInterviewOver.current) {
-            console.warn("Cannot speak: No voice selected or interview is over");
             if (callback) callback();
             return;
         }
@@ -286,19 +286,19 @@ export default function InterviewPage() {
         setIsSpeaking(true);
 
         // Cancel any ongoing utterance
-        if (window.speechSynthesis.speaking) {
-            //console.log("Cancelling ongoing speech");
+        if (window.speechSynthesis.speaking || window.speechSynthesis.pending) {
             window.speechSynthesis.cancel();
+            await new Promise((resolve) => setTimeout(resolve, 300)); // wait 300ms
         }
 
         // Create new utterance
         const synth = window.speechSynthesis;
         speechUtterance.current = new SpeechSynthesisUtterance(text);
 
-        // Always use the saved female voice reference to ensure consistency
+        // Configure voice
         speechUtterance.current.voice = selectedVoiceRef.current;
         speechUtterance.current.lang = selectedVoiceRef.current.lang || 'en-US';
-        speechUtterance.current.rate = 0.85;
+        speechUtterance.current.rate = 0.9;
         speechUtterance.current.pitch = 1.1;
 
         // Ensure speech synthesis doesn't get cut off
@@ -311,18 +311,18 @@ export default function InterviewPage() {
             }
         }, 5000);
 
+        // Handle completion
         speechUtterance.current.onend = () => {
-            //console.log("Speech completed");
             clearInterval(keepSpeechAlive);
             speechUtterance.current = null;
             setIsSpeaking(false);
 
             if (callback) {
-                //console.log("Executing speech callback");
-                setTimeout(() => callback(), 500); // Small delay before callback
+                setTimeout(() => callback(), 500);
             }
         };
 
+        // Handle errors
         speechUtterance.current.onerror = (err) => {
             console.error("Speech error:", err);
             clearInterval(keepSpeechAlive);
@@ -334,14 +334,16 @@ export default function InterviewPage() {
             }
         };
 
+        // Start speaking
         try {
             synth.speak(speechUtterance.current);
-            await fetchPhonemes(text); // Fetch phonemes and update state
+            fetchPhonemes(text); // don't await
+            // For avatar lip-sync
+
             // Fallback in case onend is not called
-            const estimatedDuration = Math.max(5000, text.length * 80); // At least 5 seconds
+            const estimatedDuration = Math.max(5000, text.length * 80);
             setTimeout(() => {
                 if (speechUtterance.current) {
-                    //console.log("Speech callback fallback triggered");
                     clearInterval(keepSpeechAlive);
                     speechUtterance.current = null;
                     setIsSpeaking(false);
@@ -358,293 +360,270 @@ export default function InterviewPage() {
         }
     };
 
-    const introduceInterview = () => {
-        if (processingAction.current) return;
-        processingAction.current = true;
+    // Process the user's response with AI to generate an appropriate reply
+    const processUserResponse = async (userText) => {
+        if (!userText || !aiModel.current) return null;
 
-        //console.log("Introducing interview...");
-        setDebug(prev => ({ ...prev, currentStep: "introducing" }));
-
-        speakResponse("Hello! I am Camalia, your AI interviewer. Let's begin your interview.", () => {
-            //console.log("Introduction completed");
-            setIsIntroduced(true);
-            setDebug(prev => ({ ...prev, introComplete: true, currentStep: "introduction complete" }));
-            processingAction.current = false;
-        });
-    };
-
-    const generateQuestionList = async () => {
-        //console.log("Generating questions...");
-        setDebug(prev => ({ ...prev, currentStep: "generating questions" }));
-
-        // Default questions in case API call fails
-        const defaultQuestions = [
-            "I am curious to know about you. Could you tell me about yourself?",
-            "What are your greatest strengths?",
-            "What do you consider to be your weaknesses?",
-            "Why are you interested in this position?",
-            "Where do you see yourself in five years?",
-            "Can you describe a challenging situation you faced at work and how you handled it?",
-            "What are your salary expectations?",
-            "Why should we hire you?",
-            "Do you have any questions for me?",
-            "What motivates you to do your best work?"
-        ];
+        setIsProcessingResponse(true);
 
         try {
-            const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-            const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-            const prompt = `Your Camalia an Ai Interviewer act and speak like real interviewer .Generate 10 ${InterviewType} questions based on this resume: ${resumeText || "Generic resume"}.
-                Respond with only the questions in a numbered list format, no explanations, no extra text,make sure based on this ${InterviewType} only `;
+            // Build context from conversation history (last 6 exchanges)
+            const recentHistory = conversationHistory.slice(-6);
+            const contextString = recentHistory.map(entry =>
+                `${entry.speaker === "interviewer" ? "Interviewer" : "Candidate"}: ${entry.text}`
+            ).join("\n");
 
-            const result = await model.generateContent({ contents: [{ parts: [{ text: prompt }] }] });
+            let prompt;
 
-            const aiResponse = result?.response?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
-            if (!aiResponse) {
-                console.warn("No response from API, using default questions");
-                currentQuestionsList.current = [...defaultQuestions];
-                setQuestionList(defaultQuestions);
-                setDebug(prev => ({ ...prev, currentStep: "API failed, using defaults" }));
-                introduceInterview();
-                return;
-            }
-
-            const questions = aiResponse
-                .split(/\n+/)
-                .map((q) => q.replace(/^\d+[).]?\s*/, "").trim())
-                .filter((q) => q.length > 5);
-
-            if (questions.length === 0) {
-                console.warn("No valid questions from API, using defaults");
-                currentQuestionsList.current = [...defaultQuestions];
-                setQuestionList(defaultQuestions);
+            if (interviewStage === "greeting" || interviewStage === "smalltalk") {
+                // For small talk, make it conversational and friendly
+                prompt = `You are an AI interviewer named Camalia. You are conducting a ${InterviewType} interview.
+                
+                Recent conversation:
+                ${contextString}
+                
+                The candidate just said: "${userText}"
+                
+                Respond naturally as if you're having a friendly conversation. Be supportive and encouraging.
+                Your response should acknowledge what they said and either continue the small talk or naturally transition
+                into beginning the interview. Keep your response under 3 sentences. Don't ask formal interview questions yet.`;
             } else {
-                //console.log(`Generated ${questions.length} questions from API`);
-                const finalQuestions = ["I am curious to know about you. Could you tell me about yourself?", ...questions.slice(0, 9)];
-                currentQuestionsList.current = [...finalQuestions];
-                setQuestionList(finalQuestions);
+                // For formal interview questions, analyze answers and give follow-ups
+                const currentQ = questionList[currentQuestionIndex];
+
+                prompt = `You are an AI interviewer named Camalia. You're conducting a ${InterviewType} interview.
+                
+                Recent conversation:
+                ${contextString}
+                
+                Your current question was: "${currentQ}"
+                The candidate just answered: "${userText}"
+                
+                Based on their answer, respond with ONE of the following:
+                1. A follow-up question that digs deeper into something interesting in their answer
+                2. A brief acknowledgment and transition to the next question if their answer was thorough
+                3. A clarifying question if their answer was vague or incomplete
+                
+                Keep your response under 2 sentences. Be professional yet friendly. Don't tell them if their answer was good or bad.`;
             }
 
-            setDebug(prev => ({ ...prev, questionsGenerated: true, currentStep: "questions generated" }));
-            introduceInterview();
+            const result = await aiModel.current.generateContent({
+                contents: [{ parts: [{ text: prompt }] }]
+            });
+
+            const response = result?.response?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+
+            setIsProcessingResponse(false);
+            return response || null;
         } catch (error) {
-            console.error("Error generating questions:", error);
-            currentQuestionsList.current = [...defaultQuestions];
-            setQuestionList(defaultQuestions);
-            setDebug(prev => ({ ...prev, currentStep: "API error, using defaults" }));
-            introduceInterview();
+            console.error("Error processing response:", error);
+            setIsProcessingResponse(false);
+            return null;
         }
     };
 
-    const stopListening = () => {
-        //console.log("Stopping speech recognition");
-        setIsListeningActive(false);
-        isListening.current = false;
-        clearTimeout(silenceTimer.current);
+    // Analyze user's speech for emotions (basic - could be enhanced with ML)
+    const analyzeEmotion = (text) => {
+        const lowerText = text.toLowerCase();
 
-        if (recognition.current) {
-            try {
-                recognition.current.stop();
-                recognition.current = null;
-            } catch (e) {
-                console.warn("Error stopping recognition:", e);
-            }
+        // Simple keyword matching - could be replaced with sentiment analysis
+        if (/nervous|anxious|worried|stress|scared/.test(lowerText)) {
+            return "nervous";
+        } else if (/happy|great|good|excellent|excited|wonderful/.test(lowerText)) {
+            return "happy";
+        } else if (/sad|upset|disappointed|unhappy|bad|terrible/.test(lowerText)) {
+            return "sad";
+        } else if (/confused|unsure|don't understand|unclear/.test(lowerText)) {
+            return "confused";
         }
+
+        return "neutral";
     };
 
-    const startListening = (currentQ, manual = false) => {
-        //console.log("Starting listening for:", currentQ, "Manual:", manual);
-        if (isInterviewOver.current || isListening.current || isSpeaking) {
-            console.warn("Cannot start listening: Interview over, already listening, or currently speaking");
+    const startListening = () => {
+        if (isInterviewOver.current || isListeningActive || isSpeaking) {
             return;
         }
 
-        isListening.current = true;
         setIsListeningActive(true);
-        setManualListening(manual);
-        recognitionAttempts.current += 1;
-        setDebug(prev => ({ ...prev, currentStep: `listening for response (attempt ${recognitionAttempts.current})` }));
-
-        // Clear current response if starting a new listening session
-        if (!manual) {
-            setCurrentResponse("");
-        }
+        setCurrentResponse("");
 
         // Stop any existing recognition
         stopListening();
 
         try {
-            // Check if SpeechRecognition is available
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
             if (!SpeechRecognition) {
                 console.error("Speech recognition not supported in this browser");
-
-                // Move on automatically after a delay since we can't listen
-                setTimeout(() => {
-                    //console.log("No speech recognition support, moving to next question");
-                    questionsProcessed.current += 1;
-                    setIsListeningActive(false);
-                    moveToNextQuestion();
-                }, 5000);
-
+                toast.error("Speech recognition not supported in your browser");
                 return;
             }
 
             recognition.current = new SpeechRecognition();
             recognition.current.lang = "en-US";
-            recognition.current.continuous = true; // Set to true to capture longer responses
-            recognition.current.interimResults = false;
+            recognition.current.continuous = true;
+            recognition.current.interimResults = true;
             recognition.current.maxAlternatives = 1;
 
             recognition.current.onresult = (event) => {
-                //console.log("Got speech result");
-
                 const lastResultIndex = event.results.length - 1;
-                const userResponse = event.results[lastResultIndex][0].transcript.trim();
-                //console.log("User response:", userResponse);
+                const transcript = event.results[lastResultIndex][0].transcript.trim();
 
-                // Update current response state for display
-                setCurrentResponse(userResponse);
+                // Update the current response as user speaks
+                setCurrentResponse(transcript);
 
-                // Only check for repetition requests if not in manual mode
-                if (!manual && /sorry|repeat|again|didn'?t get/i.test(userResponse)) {
-                    //console.log("User asked for repetition");
+                // Reset silence timer as we're receiving speech
+                clearTimeout(silenceTimer.current);
+
+                // Set a new silence timer
+                silenceTimer.current = setTimeout(async () => {
                     stopListening();
-                    speakResponse(`Sure, I'll repeat: ${currentQ}`, () => startListening(currentQ));
-                    return;
-                }
 
-                if (manual) {
-                    // In manual mode, don't automatically move to next question
-                    stopListening();
-                } else {
-                    stopListening();
-                    setResponses((prev) => ({ ...prev, [currentQ]: userResponse }));
-                    questionsProcessed.current += 1;
-                    setDebug(prev => ({ ...prev, currentStep: "response recorded" }));
+                    // Detect emotion from text
+                    const detectedEmotion = analyzeEmotion(transcript);
+                    setEmotionState(detectedEmotion);
 
-                    // Small delay before moving to next question
-                    setTimeout(() => moveToNextQuestion(), 1000);
-                }
+                    // Add user's response to history
+                    updateConversationHistory("candidate", transcript);
+
+                    // For interview questions, save formal responses
+                    if (interviewStage === "questions" && currentQuestionIndex >= 0 && currentQuestionIndex < questionList.length) {
+                        setResponses(prev => ({
+                            ...prev,
+                            [questionList[currentQuestionIndex]]: transcript
+                        }));
+                    }
+
+                    // Process the response and get AI's reply
+                    const aiResponse = await processUserResponse(transcript);
+
+                    if (aiResponse) {
+                        // Add AI response to history and speak it
+                        updateConversationHistory("interviewer", aiResponse);
+
+                        speakResponse(aiResponse, () => {
+                            // If we're in small talk and there's a reference to starting or being ready
+                            if (interviewStage === "smalltalk" &&
+                                /start|begin|ready|let's go|proceed|interview|question/i.test(transcript)) {
+                                setInterviewStage("questions");
+                                setTimeout(() => moveToNextQuestion(), 1000);
+                            }
+                            // If we're in greetings, move to small talk
+                            else if (interviewStage === "greeting") {
+                                setInterviewStage("smalltalk");
+                                setTimeout(() => startListening(), 500);
+                            }
+                            // If we're in questions but not ready for the next one
+                            else if (interviewStage === "questions" &&
+                                !/next|continue|another|move on/i.test(aiResponse)) {
+                                // Keep discussing the current question
+                                setTimeout(() => startListening(), 500);
+                            }
+                            // Otherwise move to the next question
+                            else if (interviewStage === "questions") {
+                                setTimeout(() => moveToNextQuestion(), 1000);
+                            } else {
+                                // Default - continue listening
+                                setTimeout(() => startListening(), 500);
+                            }
+                        });
+                    } else {
+                        // Fallback if AI fails
+                        if (interviewStage === "questions") {
+                            moveToNextQuestion();
+                        } else {
+                            speakResponse("Let's start with the interview questions now.", () => {
+                                setInterviewStage("questions");
+                                moveToNextQuestion();
+                            });
+                        }
+                    }
+                }, 2000); // 2 seconds of silence to process response
             };
 
             recognition.current.onerror = (event) => {
                 console.error("Speech recognition error:", event.error);
                 stopListening();
-
-                if (manual) {
-                    // Just stop in manual mode, don't proceed automatically
-                    return;
-                }
-
-                // If we've tried a few times and still have errors, just move on
-                if (recognitionAttempts.current >= 2) {
-                    setDebug(prev => ({ ...prev, currentStep: "recognition failed, moving on" }));
-                    questionsProcessed.current += 1;
-                    setTimeout(() => moveToNextQuestion(), 1000);
-                } else {
-                    // Try one more time
-                    speakResponse("I'm having trouble hearing you. Let me try again.", () => {
-                        setTimeout(() => startListening(currentQ), 500);
-                    });
-                }
             };
 
             recognition.current.onend = () => {
-                //console.log("Recognition ended");
-
-                // In manual mode, just update the listening state
-                if (manual) {
-                    isListening.current = false;
-                    setIsListeningActive(false);
-                    return;
-                }
-
-                // If we're still supposed to be listening, but recognition ended unexpectedly
-                if (isListening.current) {
-                    //console.log("Recognition ended unexpectedly, restarting...");
-                    if (recognitionAttempts.current < 3) {
-                        // Try to restart the recognition once with a small delay
-                        setTimeout(() => {
-                            try {
-                                if (recognition.current) {
-                                    recognition.current.start();
-                                } else {
-                                    // If recognition was cleared, create a new one
-                                    startListening(currentQ);
-                                }
-                            } catch (e) {
-                                console.error("Failed to restart recognition:", e);
-                                stopListening();
-                                setTimeout(() => moveToNextQuestion(), 1000);
-                            }
-                        }, 500);
-                    } else {
-                        // If we've tried too many times, move on
-                        //console.log("Too many recognition attempts, moving on");
-                        stopListening();
-                        questionsProcessed.current += 1;
-                        setTimeout(() => moveToNextQuestion(), 1000);
+                // If recognition ended but we weren't done, restart it
+                if (isListeningActive && !isInterviewOver.current) {
+                    try {
+                        recognition.current.start();
+                    } catch (e) {
+                        console.error("Failed to restart recognition:", e);
                     }
                 }
             };
 
             recognition.current.start();
-            //console.log("Speech recognition started");
+
+            // Set silence timer for no response case
+            silenceTimer.current = setTimeout(() => {
+                stopListening();
+
+                // Handle silence based on interview stage
+                if (interviewStage === "greeting" || interviewStage === "smalltalk") {
+                    speakResponse("I notice you're quiet. Are you ready to begin the interview questions?", () => {
+                        setInterviewStage("questions");
+                        setTimeout(() => moveToNextQuestion(), 1000);
+                    });
+                } else {
+                    speakResponse("I didn't catch your response. Let's move on to the next question.", () => {
+                        moveToNextQuestion();
+                    });
+                }
+            }, RESPONSE_TIME_LIMIT);
 
         } catch (error) {
             console.error("Error setting up speech recognition:", error);
             stopListening();
+        }
+    };
 
-            if (!manual) {
-                questionsProcessed.current += 1;
-                setTimeout(() => moveToNextQuestion(), 1000); // Move on despite error
+    const stopListening = () => {
+        setIsListeningActive(false);
+        clearTimeout(silenceTimer.current);
+
+        if (recognition.current) {
+            try {
+                recognition.current.stop();
+            } catch (e) {
+                console.warn("Error stopping recognition:", e);
             }
+            recognition.current = null;
         }
     };
 
     const moveToNextQuestion = () => {
         if (processingAction.current || isInterviewOver.current) {
-            //console.log("Already processing an action or interview is over, not moving to next question");
             return;
         }
 
         processingAction.current = true;
-        //console.log("Moving to next question...");
-        setDebug(prev => ({ ...prev, currentStep: "moving to next question" }));
 
-        // Reset recognition attempts for the next question
-        recognitionAttempts.current = 0;
-
-        // Clear current response for the new question
+        // Clear current response
         setCurrentResponse("");
 
-        // Work with our ref copy of the questions list to avoid race conditions
-        if (currentQuestionsList.current.length === 0) {
-            //console.log("No more questions, ending interview");
+        // Check if we have more questions
+        const nextIndex = currentQuestionIndex + 1;
+        if (nextIndex >= questionList.length) {
             processingAction.current = false;
             endInterview();
             return;
         }
 
-        // Get the first question and remove it from the list
-        const nextQuestion = currentQuestionsList.current.shift();
-        setQuestionList([...currentQuestionsList.current]); // Update state with remaining questions
+        // Set the next question
+        const nextQuestion = questionList[nextIndex];
+        setCurrentQuestionIndex(nextIndex);
         setQuestion(nextQuestion);
-        currentQuestion.current = nextQuestion;
 
-        //console.log(`Next question: "${nextQuestion}"`);
-        //console.log(`Questions processed: ${questionsProcessed.current}, remaining: ${currentQuestionsList.current.length}`);
-
-        setDebug(prev => ({
-            ...prev,
-            currentStep: "asking question",
-        }));
-
+        // Speak the question and start listening for response
         speakResponse(nextQuestion, () => {
             processingAction.current = false;
-            startListening(nextQuestion);
+            startListening();
         });
     };
 
@@ -654,151 +633,186 @@ export default function InterviewPage() {
         processingAction.current = true;
         speakResponse(question, () => {
             processingAction.current = false;
+            startListening();
         });
     };
 
-    const toggleManualListening = () => {
-        if (isSpeaking || !question) return;
-
-        if (isListeningActive) {
-            stopListening();
-        } else {
-            startListening(question, true);
-        }
-    };
-
     const submitResponse = () => {
-        if (!currentResponse || !question) return;
+        if (!currentResponse) return;
 
         stopListening();
-        setResponses((prev) => ({ ...prev, [question]: currentResponse }));
-        questionsProcessed.current += 1;
 
+        // Add to conversation history
+        updateConversationHistory("candidate", currentResponse);
+
+        // For formal questions, save the response
+        if (interviewStage === "questions" && currentQuestionIndex >= 0) {
+            const currentQ = questionList[currentQuestionIndex];
+            setResponses(prev => ({ ...prev, [currentQ]: currentResponse }));
+        }
+
+        // Process the response asynchronously
+        processUserResponse(currentResponse).then(aiResponse => {
+            if (aiResponse) {
+                updateConversationHistory("interviewer", aiResponse);
+                speakResponse(aiResponse, () => {
+                    if (interviewStage === "smalltalk" &&
+                        /start|begin|ready|let's go|proceed|interview|question/i.test(currentResponse)) {
+                        setInterviewStage("questions");
+                        setTimeout(() => moveToNextQuestion(), 1000);
+                    }
+                    else if (interviewStage === "questions" &&
+                        !/next|continue|another|move on/i.test(aiResponse)) {
+                        setTimeout(() => startListening(), 500);
+                    }
+                    else if (interviewStage === "questions") {
+                        setTimeout(() => moveToNextQuestion(), 1000);
+                    } else {
+                        setTimeout(() => startListening(), 500);
+                    }
+                });
+            } else {
+                // Fallback if AI fails
+                if (interviewStage === "questions") {
+                    moveToNextQuestion();
+                } else {
+                    setInterviewStage("questions");
+                    moveToNextQuestion();
+                }
+            }
+        });
+    };
+
+    const skipQuestion = () => {
+        stopListening();
         setTimeout(() => moveToNextQuestion(), 500);
     };
 
     const endInterview = () => {
-        toast.success("Interview Completed Successfully");
-        //console.log("Ending interview");
         if (isInterviewOver.current) return;
 
         isInterviewOver.current = true;
-        setDebug(prev => ({ ...prev, currentStep: "ending interview" }));
-
         clearInterval(interviewTimer.current);
         stopListening();
 
-        if (window.speechSynthesis.speaking) {
-            window.speechSynthesis.cancel();
-        }
 
-        speakResponse("Thank you for completing the interview. We appreciate your time!", () => {
-            //console.log("Interview complete, stopping video stream and uploading video");
-            stopVideoStream();
-            setTimeout(() => navigate("/"), 4000);
+
+        // Generate a personalized conclusion based on the conversation
+        generateConclusion().then(conclusion => {
+            const finalMessage = conclusion || "Thank you for completing the interview. We appreciate your time and responses!";
+
+            speakResponse(finalMessage, () => {
+
+                toast.success("Interview completed successfully");
+                setTimeout(() => navigate("/"), 2000);
+            });
         });
     };
 
-    const handleVisibilityChange = () => {
-        if (document.hidden) {
-            toast.error("Interview Stoped:Tab Switch Detected Don't Switch Tab During Interview..")
-            endInterview();
-        }
-    };
+    // Generate a personalized conclusion
+    const generateConclusion = async () => {
+        if (!aiModel.current) return null;
 
-    const startVideoStream = async () => {
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-            if (videoRef.current) {
-                videoRef.current.srcObject = stream;
-            }
-            const recorder = new MediaRecorder(stream);
-            recorder.ondataavailable = handleDataAvailable;
-            recorder.onstop = handleStop;
-            setMediaRecorder(recorder);
-            recorder.start(); // Start recording immediately
-        } catch (error) {
-            console.error("Error accessing media devices.", error);
-            toast.error("Error accessing media devices.");
-            navigate("/interview");
-        }
-    };
+            // Build context from all the formal question responses
+            const responseSummary = Object.entries(responses)
+                .map(([question, answer]) => `Q: ${question}\nA: ${answer}`)
+                .join("\n\n");
 
-    const stopVideoStream = () => {
-        if (videoRef.current && videoRef.current.srcObject) {
-            const tracks = videoRef.current.srcObject.getTracks();
-            tracks.forEach(track => track.stop());
-        }
-        if (mediaRecorder) {
-            mediaRecorder.stop(); // Stop recording
-        }
-    };
+            const prompt = `You are an AI interviewer named Camalia who just finished conducting a ${InterviewType} interview.
+            
+            The candidate provided these responses to your questions:
+            ${responseSummary}
+            
+            Create a friendly, encouraging conclusion to end the interview. Thank them for their time, mention 1-2 specific
+            positive aspects of their responses, and wish them well. Keep it under 3 sentences and professional.`;
 
-    const handleDataAvailable = (event) => {
-        if (event.data.size > 0) {
-            setRecordedChunks(prev => [...prev, event.data]);
-        }
-    };
-
-    const handleStop = async () => {
-        if (recordedChunks.length === 0) {
-            console.error("No recorded data available. Skipping upload.");
-            toast.error("No video recorded. Please ensure your camera is working.");
-            return;
-        }
-
-        const blob = new Blob(recordedChunks, { type: "video/webm" });
-        setRecordedChunks([]); // Reset recorded chunks after creating Blob
-
-        const formData = new FormData();
-        //console.log("Interview Page is uploading");
-        formData.append("video", blob, "interview.webm");
-        formData.append("interviewType", InterviewType);
-        try {
-            const response = await axios.post("https://upskillme-e2tz.onrender.com/api/v1/uploadtocloud", formData, {
-                headers: { "Content-Type": "multipart/form-data" },
-                withCredentials: true, // ✅ This ensures cookies are sent
+            const result = await aiModel.current.generateContent({
+                contents: [{ parts: [{ text: prompt }] }]
             });
 
-            if (response.status === 200) {
-                toast.success("Video uploaded successfully");
-                //console.log("Video uploaded successfully", response.data);
-            } else {
-                toast.error("Error uploading video");
-            }
+            return result?.response?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || null;
         } catch (error) {
-            toast.error("Error uploading video");
-            console.error("Error uploading video", error);
-        }
-
-        if (onRecordingStop) {
-            onRecordingStop();
+            console.error("Error generating conclusion:", error);
+            return null;
         }
     };
 
+
+
+    const handleVideoStop = async () => {
+        if (recordedChunks.length === 0) return;
+
+        const blob = new Blob(recordedChunks, { type: "video/webm" });
+        setRecordedChunks([]);
+
+        const formData = new FormData();
+        formData.append("video", blob, "interview.webm");
+        formData.append("interviewType", InterviewType);
+
+        try {
+            const response = await axios.post(
+                "https://upskillme-e2tz.onrender.com/api/v1/uploadtocloud",
+                formData,
+                {
+                    headers: { "Content-Type": "multipart/form-data" },
+                    withCredentials: true,
+                }
+            );
+
+            if (response.status === 200) {
+                toast.success("Interview video saved successfully");
+            }
+        } catch (error) {
+            console.error("Error uploading video:", error);
+            toast.error("Failed to save interview recording");
+        }
+    };
+
+    // Format timer for display
+    const formatTime = (seconds) => {
+        const minutes = Math.floor(seconds / 60);
+        const remainingSeconds = seconds % 60;
+        return `${minutes}:${remainingSeconds < 10 ? '0' : ''}${remainingSeconds}`;
+    };
+
+    if (isLoading) {
+        return (
+            <div className="min-h-screen w-full bg-gray-900 text-white flex items-center justify-center">
+                <div className="flex flex-col items-center">
+                    <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-blue-500 mb-4"></div>
+                    <p className="text-xl">Preparing your interview...</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen w-full bg-gray-900 text-white p-4 flex items-center justify-center">
             <div className="w-full max-w-[80%] h-full bg-gray-800 rounded-xl border-rounded overflow-hidden shadow-2xl flex flex-col">
-
                 {/* Header */}
-                <div className="bg-gray-900 py-4 px-6 flex justify-between items-center ">
+                <div className="bg-gray-900 py-4 px-6 flex justify-between items-center">
                     <h1 className="text-2xl font-bold text-blue-400">AI INTERVIEWER</h1>
-                    <div className="text-red-500 font-medium text-lg">
-                        {`Time: ${Math.floor(timer / 60)}:${("0" + Math.floor(timer % 60)).slice(-2)}`}
+                    <div className="flex items-center space-x-4">
+                        <div className="text-white text-sm">
+                            {interviewStage === "questions" &&
+                                `Question ${currentQuestionIndex + 1}/${questionList.length}`}
+                        </div>
+                        <div className="text-red-500 font-medium text-lg">
+                            {`Time: ${formatTime(timer)}`}
+                        </div>
                     </div>
                 </div>
 
                 {/* Main Content */}
                 <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
-
                     {/* Left Side - Interviewer */}
                     <div className="w-full md:w-1/2 flex flex-col p-6 space-y-6">
                         <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center">
                             <Scene phonemes={phonemes} isSpeaking={isSpeaking} />
                         </div>
                         <div className="bg-gray-700 p-4 rounded-lg">
-                            <h2 className="text-lg font-semibold text-blue-400 mb-2">Question:</h2>
+                            <h2 className="text-lg font-semibold text-blue-400 mb-2">Question {currentQuestionIndex + 1}/{questionList.length}:</h2>
                             <p>{question || "Waiting for a question..."}</p>
                         </div>
                     </div>
@@ -806,69 +820,73 @@ export default function InterviewPage() {
                     {/* Right Side - Candidate */}
                     <div className="w-full md:w-1/2 flex flex-col p-6 space-y-6">
                         <div className="relative aspect-square bg-gray-700 rounded-lg overflow-hidden">
-                            <VideoStream onRecordingStop={endInterview} />
+                            <VideoStream isInterviewOver={isInterviewOver.current} />
+
                             <div className="absolute top-2 left-2 flex items-center space-x-2 bg-black bg-opacity-50 px-3 py-1 rounded-full text-xs text-white">
                                 <span className="h-2.5 w-2.5 bg-red-500 rounded-full animate-ping"></span>
                                 <span>LIVE</span>
                             </div>
-
+                            {isListeningActive && (
+                                <div className="absolute bottom-2 right-2 bg-green-500 px-3 py-1 rounded-full text-xs text-white">
+                                    Listening...
+                                </div>
+                            )}
                         </div>
 
                         {/* Answer Input */}
                         <div className="flex flex-col flex-1">
                             <h2 className="text-lg font-semibold text-purple-400 mb-2">Your Response:</h2>
                             <div className="flex-1 bg-gray-700 p-4 rounded-lg overflow-auto">
-                                {currentResponse || "Your answer will appear here..."}
+                                {currentResponse || "Your answer will appear here as you speak..."}
                             </div>
                         </div>
 
                         {/* Control Buttons */}
-                        <div className="flex items-center justify-center gap-6 mt-4">
-                            <button onClick={endInterview} className="p-3 bg-purple-500 hover:bg-purple-700 rounded-full text-2xl">
-                                ❌
-                            </button>
+                        <div className="grid grid-cols-3 gap-4">
                             <button
-                                onClick={toggleManualListening}
-                                className={`p-3 rounded-full text-2xl ${isListeningActive ? 'bg-red-500' : 'bg-blue-500'} hover:brightness-110`}
+                                onClick={endInterview}
+                                className="py-2 px-4 bg-red-500 hover:bg-red-600 rounded-lg font-medium"
                             >
-                                🎙️
+                                End Interview
                             </button>
+
+                            <button
+                                onClick={isListeningActive ? stopListening : startListening}
+                                disabled={isSpeaking || processingAction.current}
+                                className={`py-2 px-4 ${isListeningActive ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600'} rounded-lg font-medium disabled:opacity-50`}
+                            >
+                                {isListeningActive ? 'Stop Listening' : 'Start Listening'}
+                            </button>
+
                             <button
                                 onClick={submitResponse}
                                 disabled={!currentResponse || processingAction.current}
-                                className="p-3 bg-green-500 hover:bg-green-700 rounded-full text-2xl disabled:opacity-50"
+                                className="py-2 px-4 bg-blue-500 hover:bg-blue-600 rounded-lg font-medium disabled:opacity-50"
                             >
-                                ✅
+                                Submit Response
                             </button>
                         </div>
 
-                        {/* Bottom Buttons */}
-                        <div className="grid grid-cols-2 gap-4 mt-6">
+                        {/* Extra Controls */}
+                        <div className="grid grid-cols-2 gap-4">
                             <button
                                 onClick={repeatCurrentQuestion}
                                 disabled={!question || isSpeaking || processingAction.current}
-                                className="py-2 px-4 bg-blue-500 hover:bg-blue-700 rounded-lg font-medium disabled:opacity-50"
+                                className="py-2 px-4 bg-purple-500 hover:bg-purple-600 rounded-lg font-medium disabled:opacity-50"
                             >
                                 Repeat Question
                             </button>
                             <button
-                                onClick={() => {
-                                    stopListening();
-                                    processingAction.current = false;
-                                    moveToNextQuestion();
-                                }}
+                                onClick={skipQuestion}
                                 disabled={processingAction.current}
                                 className="py-2 px-4 bg-yellow-500 hover:bg-yellow-600 rounded-lg font-medium disabled:opacity-50"
                             >
-                                Skip
+                                Skip Question
                             </button>
                         </div>
-
                     </div>
                 </div>
-
             </div>
         </div>
     );
-
 }
