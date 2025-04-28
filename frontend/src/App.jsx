@@ -37,7 +37,7 @@ function App() {
   });
 
   if (isLoading) {
-    return <div className='flex flex-col justify-center items-center w-screen h-screen'><InfinitySpinner /><div class="loading font-mono text-white">Loading<span class="dots"></span></div></div>; // Add a loading state here
+    return <div className='flex flex-col justify-center items-center w-screen h-screen'><InfinitySpinner /><div className="loading font-mono text-white">Loading<span className="dots"></span></div></div>; // Add a loading state here
   }
 
   return (

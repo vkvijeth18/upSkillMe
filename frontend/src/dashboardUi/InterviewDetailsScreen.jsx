@@ -4,7 +4,9 @@ import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Toolti
 export function InterviewDetailsScreen({ interview }) {
     // Parse analysis JSON if it exists
     console.log(interview);
-    const analysisData = interview.analysis.metrics
+    console.log(interview.analysis);
+    if (interview.analysis == undefined) interview.analysis = {}
+    const analysisData = interview.analysis.metrics || {};
     console.log(analysisData);
     const recommendations = interview.analysis.recommendations;
     const overallScore = interview.analysis.score;
