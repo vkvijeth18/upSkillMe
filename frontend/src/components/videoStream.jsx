@@ -21,8 +21,6 @@ const VideoStream = ({ isInterviewOver }) => {
         const blob = new Blob(chunksRef.current, { type: "video/webm" });
 
         // Debug: preview the recorded video before upload
-        const previewUrl = URL.createObjectURL(blob);
-        window.open(previewUrl);
 
         chunksRef.current = []; // Clear after creating blob
 
