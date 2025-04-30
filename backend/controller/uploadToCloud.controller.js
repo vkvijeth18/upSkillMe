@@ -99,14 +99,14 @@ export const uploadToCloud = async (req, res) => {
     }
 
     // Delete video from Cloudinary
-    try {
-      await cloudinary.api.delete_resources([publicId], {
-        resource_type: "video",
-      });
-      console.log(`Video deleted from Cloudinary: ${publicId}`);
-    } catch (deleteErr) {
-      console.error("Error deleting video from Cloudinary:", deleteErr);
-    }
+    // try {
+    //   await cloudinary.api.delete_resources([publicId], {
+    //     resource_type: "video",
+    //   });
+    //   console.log(`Video deleted from Cloudinary: ${publicId}`);
+    // } catch (deleteErr) {
+    //   console.error("Error deleting video from Cloudinary:", deleteErr);
+    // }
 
     // Final fallback if analysis failed
     if (status === "Failed") {
