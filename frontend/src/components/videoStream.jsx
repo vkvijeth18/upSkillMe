@@ -18,7 +18,9 @@ const VideoStream = ({ isInterviewOver }) => {
             return;
         }
 
-        const blob = new Blob(chunksRef.current, { type: "video/webm" });
+        const blob = new Blob(chunksRef.current, { type: 'video/webm' });
+
+
         chunksRef.current = []; // Clear after creating blob
 
         const formData = new FormData();
