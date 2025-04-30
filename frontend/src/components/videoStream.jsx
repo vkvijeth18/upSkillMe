@@ -18,21 +18,27 @@ const VideoStream = ({ isInterviewOver }) => {
             return;
         }
 
-        const blob = new Blob(chunksRef.current, { type: 'video/webm' });
+        const blob = new Blob(chunksRef.current, { type: "video/webm" });
 
+        // Debug: preview the recorded video before upload
+        const previewUrl = URL.createObjectURL(blob);
+        window.open(previewUrl);
 
         chunksRef.current = []; // Clear after creating blob
 
         const formData = new FormData();
-        formData.append("video", blob, "interview.webm"); // ✅ field name must match
-
+        formData.append("video", blob, "interview.webm");
         formData.append("interviewType", InterviewType);
 
         try {
-            const response = await axios.post("https://upskillme-e2tz.onrender.com/api/v1/uploadtocloud", formData, {
-                headers: { "Content-Type": "multipart/form-data" },
-                withCredentials: true, // This ensures cookies are sent
-            });
+            const response = await axios.post(
+                "https://upskillme-e2tz.onrender.com/api/v1/uploadtocloud",
+                formData,
+                {
+                    headers: { "Content-Type": "multipart/form-data" },
+                    withCredentials: true,
+                }
+            );
 
             if (response.status === 200) {
                 console.log("✅ Video uploaded successfully");
@@ -46,12 +52,10 @@ const VideoStream = ({ isInterviewOver }) => {
 
     // Function to stop video stream
     const stopVideoStream = () => {
-        // Stop media recorder
         if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
             mediaRecorderRef.current.stop();
         }
 
-        // Stop camera and mic tracks
         if (videoRef.current && videoRef.current.srcObject) {
             const tracks = videoRef.current.srcObject.getTracks();
             tracks.forEach((track) => track.stop());
@@ -63,11 +67,25 @@ const VideoStream = ({ isInterviewOver }) => {
     const startVideoStream = async () => {
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+
+            const audioTracks = stream.getAudioTracks();
+            console.log("🎤 Audio tracks:", audioTracks);
+            if (audioTracks.length === 0) {
+                console.warn("⚠️ No audio tracks found in stream");
+            }
+
+            // Optional: Audio analysis (debugging only)
+            const audioContext = new AudioContext();
+            const source = audioContext.createMediaStreamSource(stream);
+            const analyser = audioContext.createAnalyser();
+            source.connect(analyser);
+            console.log("🔊 Audio stream connected for debugging");
+
             if (videoRef.current) {
                 videoRef.current.srcObject = stream;
             }
 
-            const recorder = new MediaRecorder(stream, { mimeType: 'video/webm; codecs=vp9' });
+            const recorder = new MediaRecorder(stream, { mimeType: "video/webm; codecs=vp8" });
             mediaRecorderRef.current = recorder;
 
             recorder.ondataavailable = (event) => {
@@ -77,19 +95,22 @@ const VideoStream = ({ isInterviewOver }) => {
             };
 
             recorder.onstop = async () => {
-                console.log("Recording stopped, processing chunks...");
-
-                if (chunksRef.current.length === 0) {  // Fixed typo: lengt → length
+                console.log("⏹️ Recording stopped, processing chunks...");
+                if (chunksRef.current.length === 0) {
                     console.error("No Recorded Chunks");
                     return;
                 }
                 await uploadVideo();
-                console.log("Video upload complete");
+                console.log("✅ Video upload complete");
             };
 
-            // Start recording
+            recorder.onstart = () => console.log("🎥 MediaRecorder started");
+            recorder.onpause = () => console.log("⏸️ MediaRecorder paused");
+            recorder.onresume = () => console.log("▶️ MediaRecorder resumed");
+            recorder.onerror = (e) => console.error("❌ MediaRecorder error:", e);
+
             recorder.start(1000); // Collect data every second
-            console.log("Recording started");
+            console.log("▶️ Recording started");
         } catch (error) {
             console.error("Error accessing media devices:", error);
             toast.error("Failed to access camera and microphone");
@@ -103,7 +124,7 @@ const VideoStream = ({ isInterviewOver }) => {
 
     useEffect(() => {
         if (isInterviewOver) {
-            stopVideoStream(); // ONLY stop recorder, don't call handleStop manually
+            stopVideoStream();
         }
     }, [isInterviewOver]);
 
