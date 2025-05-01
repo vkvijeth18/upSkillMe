@@ -30,12 +30,16 @@ function App() {
         return response.data;
       } catch (error) {
         toast.error("Please Login To Continue");
-        navigate("/signup");
         return null;
       }
     },
   });
-
+  const ProtectedRoute = ({ children }) => {
+    if (!authUser) {
+      return <Navigate to="/signup" replace />;
+    }
+    return children;
+  };
   if (isLoading) {
     return <div className='flex flex-col justify-center items-center w-screen h-screen'><InfinitySpinner /><div className="loading font-mono text-white">Loading<span className="dots"></span></div></div>; // Add a loading state here
   }
@@ -47,19 +51,22 @@ function App() {
 
       <Routes>
         <Route path="/" element={<HomePage />} />
-        {authUser ? (
-          <>
-            <Route path="/takeinterview" element={<InterviewPage />} />
-            <Route path="/profile" element={<ProfilePage />} />
-            <Route path="/interview" element={<InterviewSelection />} />
-          </>
-        ) : (
-          <Route path="/signup" element={<AuthPage />} />
-        )}
+        <Route path="/signup" element={<AuthPage />} />
 
-        {/* If already logged in, redirect away from signup */}
+        <Route path="/takeinterview" element={
+          <ProtectedRoute><InterviewPage /></ProtectedRoute>
+        } />
+        <Route path="/profile" element={
+          <ProtectedRoute><ProfilePage /></ProtectedRoute>
+        } />
+        <Route path="/interview" element={
+          <ProtectedRoute><InterviewSelection /></ProtectedRoute>
+        } />
+
+        {/* Redirect to profile if logged in and tries to access signup */}
         {authUser && <Route path="/signup" element={<Navigate to="/profile" replace />} />}
       </Routes>
+
     </>
   );
 }

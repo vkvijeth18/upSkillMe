@@ -1,3 +1,4 @@
+// Add this to top with other imports
 import { useState } from 'react';
 import { AiOutlineClose, AiOutlineMenu } from 'react-icons/ai';
 import { Link } from 'react-router-dom';
@@ -8,33 +9,32 @@ import { Home, Info, PhoneCall, User, LogIn, LogOut } from 'lucide-react';
 
 const Navbar = ({ isUserLoggedIn }) => {
     const [nav, setNav] = useState(false);
-
-    const handleNav = () => {
-        setNav(!nav);
-    };
-
-
+    const [loggingOut, setLoggingOut] = useState(false);
     const queryClient = useQueryClient();
+
+    const handleNav = () => setNav(prev => !prev);
 
     const handleLogOut = async () => {
         try {
+            setLoggingOut(true);
             const response = await axios.post(
                 "https://upskillme-e2tz.onrender.com/api/v1/auth/logout", {},
                 { headers: { "Content-Type": "application/json" }, withCredentials: true }
             );
 
             if (response.data.success) {
-                ////console.log("✅  Response:", response.data);
-                toast.success("Logged out Sucessfully");
+                toast.success("Logged out successfully");
                 queryClient.invalidateQueries("authUser");
             } else {
-                console.error("❌ Invalid response:", response.data);
                 toast.error("Error logging out");
             }
         } catch (error) {
-            console.error("❌ Error In logout", error);
+            toast.error("Logout failed");
+        } finally {
+            setLoggingOut(false);
+            setNav(false); // close mobile menu
         }
-    }
+    };
 
     const navItems = [
         { id: '1', text: 'Home', link: "/", icon: <Home size={18} /> },
@@ -45,9 +45,8 @@ const Navbar = ({ isUserLoggedIn }) => {
         { id: '6', text: 'Log Out', link: "/logout", icon: <LogOut size={18} />, onClick: handleLogOut },
     ];
 
-
     return (
-        <div className="bg-gradient-to-r from-[#1C1733] to-[#221b3a] flex justify-between items-center h-16 min-w-[100px] mx-auto px-6 text-white rounded-2xl shadow-lg  mt-4 sm:px-10 ml-4 mr-4">
+        <div className="bg-gradient-to-r from-[#1C1733] to-[#221b3a] flex justify-between items-center h-16 mx-auto px-6 text-white rounded-2xl shadow-lg mt-4 sm:px-10 ml-4 mr-4">
 
             {/* Logo */}
             <h1 className="text-2xl md:text-3xl font-extrabold tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-[#00df9a] to-[#0091df]">
@@ -69,8 +68,16 @@ const Navbar = ({ isUserLoggedIn }) => {
                         >
                             {item.icon}
                             {item.onClick ? (
-                                <button onClick={(e) => { e.preventDefault(); item.onClick(); }}>
-                                    {item.text}
+                                <button
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        item.onClick();
+                                    }}
+                                    disabled={loggingOut}
+                                    className={`transition px-1 ${loggingOut ? 'opacity-50 cursor-not-allowed' : ''
+                                        }`}
+                                >
+                                    {loggingOut ? "Logging out..." : item.text}
                                 </button>
                             ) : (
                                 <Link to={item.link}>{item.text}</Link>
@@ -78,7 +85,6 @@ const Navbar = ({ isUserLoggedIn }) => {
                         </li>
                     ))}
             </ul>
-
 
             {/* Mobile Navigation Icon */}
             <div onClick={handleNav} className="block md:hidden cursor-pointer z-20">
@@ -89,7 +95,7 @@ const Navbar = ({ isUserLoggedIn }) => {
             <ul
                 className={`fixed z-10 md:hidden top-0 left-0 w-[60%] h-full bg-[#1C1733] rounded-tr-3xl rounded-br-3xl p-8 shadow-2xl ease-in-out duration-500 ${nav ? 'translate-x-0' : '-translate-x-full'}`}
             >
-                <h1 className="text-2xl md:text-3xl font-extrabold tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-[#00df9a] to-[#0091df] mb-3">
+                <h1 className="text-2xl font-extrabold tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-[#00df9a] to-[#0091df] mb-4">
                     UpSkiLLMe<span className="text-xs ml-1 text-gray-400">.inc</span>
                 </h1>
 
@@ -107,18 +113,20 @@ const Navbar = ({ isUserLoggedIn }) => {
                             {item.icon}
                             {item.onClick ? (
                                 <button
-                                    onClick={() => {
-                                        handleNav(); // close menu
-                                        item.onClick(); // logout
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        item.onClick();
                                     }}
-                                    className="text-left"
+                                    disabled={loggingOut}
+                                    className={`text-left w-full ${loggingOut ? 'opacity-50 cursor-not-allowed' : ''
+                                        }`}
                                 >
-                                    {item.text}
+                                    {loggingOut ? "Logging out..." : item.text}
                                 </button>
                             ) : (
                                 <Link
                                     to={item.link}
-                                    onClick={handleNav} // close menu after clicking the link
+                                    onClick={() => setNav(false)}
                                     className="w-full"
                                 >
                                     {item.text}
@@ -127,8 +135,6 @@ const Navbar = ({ isUserLoggedIn }) => {
                         </li>
                     ))}
             </ul>
-
-
         </div>
     );
 };
