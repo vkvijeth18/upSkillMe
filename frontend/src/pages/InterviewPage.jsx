@@ -7,7 +7,7 @@ import axios from "axios";
 import Scene from "./model"; // Avatar component
 import { toast } from "react-hot-toast";
 import VideoStream from "../components/videoStream";
-import MobileStartScreen from "../components/MobileStartScreen";
+
 const INTERVIEW_TIME_LIMIT = 20 * 60 * 1000; // 20 minutes
 const RESPONSE_TIME_LIMIT = 40000; // 30 seconds
 const GEMINI_API_KEY = "AIzaSyCo1bGaPS2Ucl1rIC8G76k-TGmU7NE5XYI";
@@ -27,10 +27,6 @@ export default function InterviewPage() {
     const [isListeningActive, setIsListeningActive] = useState(false);
     const [isSpeaking, setIsSpeaking] = useState(false);
     const [phonemes, setPhonemes] = useState("");
-
-    const [canSpeak, setCanSpeak] = useState(false);
-    const [isMobile, setIsMobile] = useState(false);
-
 
     // New conversation state
     const [conversationHistory, setConversationHistory] = useState([]);
@@ -57,26 +53,6 @@ export default function InterviewPage() {
     const isInterviewOver = useRef(false);
     const genAI = useRef(null);
     const aiModel = useRef(null);
-    useEffect(() => {
-        const checkMobile = () => setIsMobile(window.innerWidth <= 768);
-        checkMobile();
-        window.addEventListener("resize", checkMobile);
-        return () => window.removeEventListener("resize", checkMobile);
-    }, []);
-    const handleStartInterview = async () => {
-        try {
-            await requestMicrophonePermission();
-            await requestCameraPermission();
-            setCanSpeak(true);
-            setIsLoading(false);
-            startInterviewTimer();
-            generateQuestionList();
-        } catch {
-            toast.error("Please enable camera and microphone access.");
-            navigate("/interview");
-        }
-    };
-
 
     // Initialize the interview
     useEffect(() => {
@@ -198,8 +174,6 @@ export default function InterviewPage() {
     };
 
     const generateQuestionList = async () => {
-        if (!canSpeak) return;
-
         // Default questions in case API call fails
         const defaultQuestions = [
             "Tell me about yourself.",
@@ -257,7 +231,6 @@ export default function InterviewPage() {
     };
 
     const introduceInterview = () => {
-        if (!canSpeak) return;
         if (processingAction.current) return;
         processingAction.current = true;
 
@@ -813,9 +786,7 @@ export default function InterviewPage() {
             </div>
         );
     }
-    if (isMobile && !canSpeak) {
-        return <MobileStartScreen onStart={handleStartInterview} />;
-    }
+
     return (
         <div className="min-h-screen w-full bg-gray-900 text-white p-4 flex items-center justify-center">
             <div className="w-full max-w-[80%] h-full bg-gray-800 rounded-xl border-rounded overflow-hidden shadow-2xl flex flex-col">
